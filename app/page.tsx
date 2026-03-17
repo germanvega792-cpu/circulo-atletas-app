@@ -199,14 +199,14 @@ function formatearFecha(fecha: string) {
   const [usuarioAtleta, setUsuarioAtleta] = useState("");
   const [contrasenaAtleta, setContrasenaAtleta] = useState("");
   const [seccionEntrenador, setSeccionEntrenador] = useState<
-  "panel" | "escuelita" | "entrenamientos" | "asistencia" | "carreras" | "usuarios"
+  "panel" | "atletas" | "entrenamientos" | "asistencia" | "carreras" | "usuarios"
 >(() => {
   if (typeof window !== "undefined") {
     const valorGuardado = localStorage.getItem("seccionEntrenadorActual");
 
     if (
       valorGuardado === "panel" ||
-      valorGuardado === "escuelita" ||
+      valorGuardado === "atletas" ||
       valorGuardado === "entrenamientos" ||
       valorGuardado === "asistencia" ||
       valorGuardado === "carreras" ||
@@ -1491,7 +1491,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
             </div>
 
             <div style={{ display: "grid", gap: "12px" }}>
-              {(["panel", "escuelita", "entrenamientos", "asistencia", "carreras", "usuarios"] as const).map((seccion) => (
+              {(["panel", "atletas", "entrenamientos", "asistencia", "carreras", "usuarios"] as const).map((seccion) => (
                   <button
                     key={seccion}
                     onClick={() => {
@@ -1598,7 +1598,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
       gap: "20px",
     }}
   >
-    <button onClick={() => setSeccionEntrenador("escuelita")} style={cardStyle}>
+    <button onClick={() => setSeccionEntrenador("atletas")} style={cardStyle}>
       <h3>ESCUELITA👦🏻</h3>
     </button>
 
@@ -1615,7 +1615,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
     </button>
   </div>
 </div>
-            {seccionEntrenador === "escuelita" && (
+            {seccionEntrenador === "atletas" && (
               <>
                 <h1 style={sectionTitleStyle}>Alumnos</h1>
 
