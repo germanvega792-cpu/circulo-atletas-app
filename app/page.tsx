@@ -444,17 +444,12 @@ cargarAlumnosDesdeSupabase();
 
   useEffect(() => {
   const cargarMarcaDelAtleta = async () => {
-    if (!usuarioAtleta) return;
-
+    if (!atletaActual?.nombre) return;
     const { data, error } = await supabase
-      .from("alumnos")
-      .select("marcasPersonales")
-      .eq("nombre", usuarioAtleta)
-      .single();
-
-    if (!error && data) {
-      setMarcaPersonalAtleta(data.marcasPersonales || "");
-    }
+  .from("alumnos")
+  .select("marcasPersonales")
+  .eq("nombre", atletaActual.nombre)
+  .single();
   };
 
   cargarMarcaDelAtleta();
@@ -533,8 +528,8 @@ if (nombreGuardado) {
   }
 
   if (rolGuardado === "atleta") {
-    setVista(vistaGuardada || "atleta");
-  }
+  setVista(vistaGuardada || "panelAtleta");
+}
 }, []);
 
   const manejarIngresoAtleta = async () => {
@@ -986,9 +981,17 @@ setTimeout(() => {
   };
 
   const atletaActual = useMemo(() => {
-    const nombreIngresado = usuarioAtleta.trim().toLowerCase();
-    return alumnos.find((a) => a.nombre.toLowerCase() === nombreIngresado) || null;
-  }, [usuarioAtleta, alumnos]);
+  if (!nombreUsuario) return null;
+
+  const nombreIngresado = nombreUsuario.trim().toLowerCase();
+
+  return (
+    alumnos.find(
+      (a) =>
+        (a.nombre || "").trim().toLowerCase() === nombreIngresado
+    ) || null
+  );
+}, [nombreUsuario, alumnos]);
 
   const historialAtletaSeleccionado = useMemo(() => {
     if (!alumnoSeleccionadoNombre) return [];
