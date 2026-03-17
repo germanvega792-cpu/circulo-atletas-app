@@ -225,6 +225,7 @@ function formatearFecha(fecha: string) {
   const [emailAuth, setEmailAuth] = useState("");
   const [passwordAuth, setPasswordAuth] = useState("");
   const [mensajeAuth, setMensajeAuth] = useState("");
+  const [nombreUsuario, setNombreUsuario] = useState("");
 
   const [alumnos, setAlumnos] = useState<Alumno[]>([]);
   const [grupoAsistencia, setGrupoAsistencia] = useState("Atletismo");
@@ -491,7 +492,7 @@ cargarAlumnosDesdeSupabase();
   }
   const { data: usuarioDB, error: rolError } = await supabase
     .from("usuarios")
-    .select("rol")
+    .select("*")
     .eq("email", data.user.email)
     .single();
 
@@ -500,6 +501,9 @@ cargarAlumnosDesdeSupabase();
     await supabase.auth.signOut();
     return;
   }
+
+  setNombreUsuario(usuarioDB.nombre || "");
+localStorage.setItem("nombreUsuarioAppClub", usuarioDB.nombre || "");
 
   if (usuarioDB.rol !== "entrenador") {
     alert("Este usuario no es entrenador.");
@@ -518,6 +522,11 @@ cargarAlumnosDesdeSupabase();
   const rolGuardado = localStorage.getItem("rolAppClub");
   const vistaGuardada = localStorage.getItem("vistaActual");
   const sesionEntrenadorActiva = localStorage.getItem("sesionEntrenadorActiva");
+
+  const nombreGuardado = localStorage.getItem("nombreUsuarioAppClub");
+if (nombreGuardado) {
+  setNombreUsuario(nombreGuardado);
+}
 
   if (rolGuardado === "entrenador" && sesionEntrenadorActiva === "true") {
     setVista(vistaGuardada || "panelEntrenador");
@@ -1452,7 +1461,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
               />
               <h2 style={{ fontSize: "22px", margin: 0 }}>Panel Entrenador</h2>
               <p style={{ marginTop: "8px", opacity: 0.9 }}>
-                {usuarioEntrenador || "Entrenador"}
+                {nombreUsuario || "Entrenador"}
               </p>
             </div>
 
@@ -1482,13 +1491,18 @@ const carrerasAtletaOrdenadas = useMemo(() => {
             </div>
 
             <button
-  onClick={() => {
-    localStorage.removeItem("rolAppClub");
-    localStorage.removeItem("vistaActual");
-    localStorage.removeItem("seccionEntrenadorActual");
-    localStorage.removeItem("sesionEntrenadorActiva");
-    setVista("inicio");
-  }}
+  onClick={async () => {
+  await supabase.auth.signOut();
+
+  localStorage.removeItem("rolAppClub");
+  localStorage.removeItem("vistaActual");
+  localStorage.removeItem("seccionEntrenadorActual");
+  localStorage.removeItem("sesionEntrenadorActiva");
+  localStorage.removeItem("nombreUsuarioAppClub");
+
+  setNombreUsuario("");
+  setVista("inicio");
+}}
   style={{
     marginTop: "30px",
     width: "100%",
@@ -1513,18 +1527,18 @@ const carrerasAtletaOrdenadas = useMemo(() => {
             }}
           >
             {seccionEntrenador === "panel" && (
-  <>
-    <h1 style={sectionTitleStyle}>Panel del entrenador</h1>
-    <p style={{ marginTop: "-10px", color: "#666"}}>
-    </p>
+              <>
+              <h1 style={sectionTitleStyle}>Panel del entrenador</h1>
+              <p style={{ marginTop: "-10px", color: "#666"}}>
 
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-        gap: "20px",
-      }}
-    >
+              </p>
+              <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                gap: "20px",
+              }}
+              >
       <div style={cardStyle}>
         <h3>Atletas activos</h3>
         <p style={{ fontSize: "34px", fontWeight: "bold" }}>{alumnos.length}</p>
@@ -2412,7 +2426,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
               <div>
                 <h1 style={{ margin: 0, fontSize: "38px" }}>Panel del Atleta</h1>
                 <p style={{ marginTop: "8px" }}>
-                  Bienvenido, {atletaActual ? atletaActual.nombre : usuarioAtleta || "Atleta"}
+                  Bienvenido, {nombreUsuario || "Atleta"}
                 </p>
                 {!atletaActual && (
                   <p style={{ marginTop: "8px", color: "#b00020" }}>
@@ -2551,11 +2565,15 @@ const carrerasAtletaOrdenadas = useMemo(() => {
             </div>
 
             <button
-              onClick={() => {
-                localStorage.removeItem("rolAppClub");
-                localStorage.removeItem("vistaActual");
-                setVista("inicio");
-              }}
+              onClick={async () => {
+                await supabase.auth.signOut();
+                  localStorage.removeItem("rolAppClub");
+                    localStorage.removeItem("vistaActual");
+                      localStorage.removeItem("nombreUsuarioAppClub");
+                        setNombreUsuario("");
+                          setVista("inicio");
+                        }}
+
               style={{
                 marginTop: "25px",
                 padding: "14px 24px",
