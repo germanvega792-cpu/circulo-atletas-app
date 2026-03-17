@@ -479,17 +479,23 @@ cargarAlumnosDesdeSupabase();
     localStorage.setItem("club_marcas", JSON.stringify(marcasRegistros));
   }, [marcasRegistros, datosCargados]);
 
-  const manejarIngresoEntrenador = () => {
-  if (usuarioEntrenador && contrasenaEntrenador) {
-    localStorage.setItem("rolAppClub", "entrenador");
-    localStorage.setItem("vistaActual", "panelEntrenador");
-    localStorage.setItem("sesionEntrenadorActiva", "true");
+  const manejarIngresoEntrenador = async () => {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: usuarioEntrenador,
+    password: contrasenaEntrenador,
+  });
 
-    setVista("panelEntrenador");
-  } else {
-    alert("Por favor completá usuario y contraseña.");
+  if (error) {
+    alert("Email o contraseña incorrectos");
+    return;
   }
-  };
+
+  localStorage.setItem("rolAppClub", "entrenador");
+  localStorage.setItem("vistaActual", "panelEntrenador");
+  localStorage.setItem("sesionEntrenadorActiva", "true");
+
+  setVista("panelEntrenador");
+};
 
   useEffect(() => {
   const rolGuardado = localStorage.getItem("rolAppClub");
@@ -505,13 +511,22 @@ cargarAlumnosDesdeSupabase();
   }
 }, []);
 
-  const manejarIngresoAtleta = () => {
-    if (usuarioAtleta && contrasenaAtleta) {
-      setVista("panelAtleta");
-    } else {
-      alert("Por favor completá nombre y contraseña.");
-    }
-  };
+  const manejarIngresoAtleta = async () => {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: usuarioAtleta,
+    password: contrasenaAtleta,
+  });
+
+  if (error) {
+    alert("Email o contraseña incorrectos");
+    return;
+  }
+
+  localStorage.setItem("rolAppClub", "atleta");
+  localStorage.setItem("vistaActual", "panelAtleta");
+
+  setVista("panelAtleta");
+};
 
   const limpiarFormularioAlumno = () => {
     setNuevoAlumno({
