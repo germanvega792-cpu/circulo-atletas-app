@@ -549,7 +549,7 @@ if (nombreGuardado) {
   }
   const { data: usuarioDB, error: rolError } = await supabase
     .from("usuarios")
-    .select("rol")
+    .select("*")
     .eq("email", data.user.email)
     .single();
 
@@ -558,6 +558,9 @@ if (nombreGuardado) {
     await supabase.auth.signOut();
     return;
   }
+
+  setNombreUsuario(usuarioDB.nombre || "");
+localStorage.setItem("nombreUsuarioAppClub", usuarioDB.nombre || "");
 
   if (usuarioDB.rol !== "atleta") {
     alert("Este usuario no es atleta.");
