@@ -1774,10 +1774,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                         <p><strong>DNI:</strong> {alumnoSeleccionado.dni}</p>
                         <p><strong>Domicilio:</strong> {alumnoSeleccionado.domicilio}</p>
                         <p><strong>Edad:</strong> {alumnoSeleccionado.edad}</p>
-                        <p><strong>Marcas personales:</strong> {alumnoSeleccionado.marcasPersonales}</p>
                         <p><strong>Grupo:</strong> {alumnoSeleccionado.grupo}</p>
-                        <p><strong>Prueba:</strong> {alumnoSeleccionado.prueba}</p>
-                        <p><strong>Nivel:</strong> {alumnoSeleccionado.nivel}</p>
                       </div>
                     )}
                   </div>
@@ -2434,11 +2431,6 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                 <p style={{ marginTop: "8px" }}>
                   Bienvenido, {nombreUsuario || "Atleta"}
                 </p>
-                {!atletaActual && (
-                  <p style={{ marginTop: "8px", color: "#b00020" }}>
-                    Ingresá con el nombre exacto de un atleta cargado.
-                  </p>
-                )}
               </div>
             </div>
 
@@ -2449,10 +2441,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                 <p><strong>DNI:</strong> {atletaActual.dni}</p>
                 <p><strong>Domicilio:</strong> {atletaActual.domicilio}</p>
                 <p><strong>Edad:</strong> {atletaActual.edad}</p>
-                <p><strong>Marcas personales:</strong> {atletaActual.marcasPersonales}</p>
                 <p><strong>Grupo:</strong> {atletaActual.grupo}</p>
-                <p><strong>Prueba:</strong> {atletaActual.prueba}</p>
-                <p><strong>Nivel:</strong> {atletaActual.nivel}</p>
               </div>
             )}
 
