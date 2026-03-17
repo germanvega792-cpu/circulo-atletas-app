@@ -228,7 +228,7 @@ function formatearFecha(fecha: string) {
   const [nombreUsuario, setNombreUsuario] = useState("");
 
   const [alumnos, setAlumnos] = useState<Alumno[]>([]);
-  const [grupoAsistencia, setGrupoAsistencia] = useState("Atletismo");
+  const [grupoAsistencia, setGrupoAsistencia] = useState("atletismo");
   const [filtroGrupo, setFiltroGrupo] = useState("Todos");
   const [planesSemanales, setPlanesSemanales] = useState<PlanSemanal[]>([]);
   const [registrosAsistencia, setRegistrosAsistencia] = useState<AsistenciaRegistro[]>([]);
@@ -426,6 +426,23 @@ cargarAlumnosDesdeSupabase();
 
   return () => subscription.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+  const obtenerAlumnos = async () => {
+    const { data, error } = await supabase
+      .from("alumnos")
+      .select("*")
+      .eq("grupo", "Atletismo"); // IMPORTANTE
+
+    if (error) {
+      console.log(error);
+    } else {
+      setAlumnos(data || []);
+    }
+  };
+
+  obtenerAlumnos();
+}, []);
 
   useEffect(() => {
   cargarAlumnosDesdeSupabase();
@@ -1091,9 +1108,11 @@ const carrerasAtletaOrdenadas = useMemo(() => {
     return alumnos.find((a) => a.nombre === alumnoSeleccionadoNombre) || null;
   }, [alumnos, alumnoSeleccionadoNombre]);
 
-  const alumnosParaAsistencia = useMemo(() => {
-  return alumnos.filter((a) => a.grupo === grupoAsistencia);
-}, [alumnos, grupoAsistencia]);
+  const alumnosParaAsistencia = alumnos.filter(
+  (alumno) =>
+    (alumno.grupo || "").trim().toLowerCase() ===
+    grupoAsistencia.trim().toLowerCase()
+);
 
   const registrosMarcasAtletaSeleccionado = useMemo(() => {
     if (!alumnoSeleccionadoNombre) return [];
