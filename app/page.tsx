@@ -485,8 +485,25 @@ cargarAlumnosDesdeSupabase();
     password: contrasenaEntrenador,
   });
 
-  if (error) {
+  if (error || !data.user) {
     alert("Email o contraseña incorrectos");
+    return;
+  }
+  const { data: usuarioDB, error: rolError } = await supabase
+    .from("usuarios")
+    .select("rol")
+    .eq("email", data.user.email)
+    .single();
+
+  if (rolError || !usuarioDB) {
+    alert("No se encontró el rol del usuario.");
+    await supabase.auth.signOut();
+    return;
+  }
+
+  if (usuarioDB.rol !== "entrenador") {
+    alert("Este usuario no es entrenador.");
+    await supabase.auth.signOut();
     return;
   }
 
@@ -517,8 +534,25 @@ cargarAlumnosDesdeSupabase();
     password: contrasenaAtleta,
   });
 
-  if (error) {
+  if (error || !data.user) {
     alert("Email o contraseña incorrectos");
+    return;
+  }
+  const { data: usuarioDB, error: rolError } = await supabase
+    .from("usuarios")
+    .select("rol")
+    .eq("email", data.user.email)
+    .single();
+
+  if (rolError || !usuarioDB) {
+    alert("No se encontró el rol del usuario.");
+    await supabase.auth.signOut();
+    return;
+  }
+
+  if (usuarioDB.rol !== "atleta") {
+    alert("Este usuario no es atleta.");
+    await supabase.auth.signOut();
     return;
   }
 
