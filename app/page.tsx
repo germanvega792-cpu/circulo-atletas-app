@@ -1599,7 +1599,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
     }}
   >
     <button onClick={() => setSeccionEntrenador("atletas")} style={cardStyle}>
-      <h3>ESCUELITA👦🏻</h3>
+      <h3>ATLETAS👟</h3>
     </button>
 
     <button onClick={() => setSeccionEntrenador("entrenamientos")} style={cardStyle}>
