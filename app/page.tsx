@@ -214,6 +214,19 @@ function formatearFecha(fecha: string) {
   return edad.toString();
 };
 
+const calcularCategoria = (edad: string) => {
+  const edadNumero = Number(edad);
+
+  if (!edad || isNaN(edadNumero)) return "";
+
+  if (edadNumero <= 16) return "U16";
+  if (edadNumero <= 18) return "U18";
+  if (edadNumero <= 20) return "U20";
+  if (edadNumero <= 23) return "U23";
+
+  return "Mayores";
+};
+
   const [emailLogin, setEmailLogin] = useState("");
   const [passwordLogin, setPasswordLogin] = useState("");
 
@@ -968,6 +981,14 @@ setTimeout(() => {
     ) || null
   );
 }, [nombreUsuario, alumnos]);
+
+const edadAtletaActual = atletaActual?.fechaNacimiento
+  ? calcularEdad(atletaActual.fechaNacimiento)
+  : atletaActual?.edad || "";
+
+const categoriaAtletaActual = edadAtletaActual
+  ? calcularCategoria(edadAtletaActual)
+  : "";
 
 useEffect(() => {
   const cargarMarcaDelAtleta = async () => {
@@ -2217,9 +2238,12 @@ const carrerasAtletaOrdenadas = useMemo(() => {
 />
 
 {nuevoUsuario.edad && (
-  <p style={{ color: "#555", marginTop: "5px" }}>
-    Edad: {nuevoUsuario.edad} años
-  </p>
+  <div style={{ marginTop: "8px", color: "#555" }}>
+    <p style={{ margin: 0 }}>Edad: {nuevoUsuario.edad} años</p>
+    <p style={{ margin: "4px 0 0 0" }}>
+      Categoría: {calcularCategoria(nuevoUsuario.edad)}
+    </p>
+  </div>
 )}
 
 <input
@@ -2307,15 +2331,19 @@ const carrerasAtletaOrdenadas = useMemo(() => {
             </div>
 
             {atletaActual && (
-              <div style={{ ...cardStyle, marginBottom: "25px" }}>
-                <h2>Mi ficha</h2>
-                <p><strong>Fecha de nacimiento:</strong> {formatearFecha(atletaActual.fechaNacimiento)}</p>
-                <p><strong>DNI:</strong> {atletaActual.dni}</p>
-                <p><strong>Domicilio:</strong> {atletaActual.domicilio}</p>
-                <p><strong>Edad:</strong> {atletaActual.edad}</p>
-                <p><strong>Grupo:</strong> {atletaActual.grupo}</p>
-              </div>
-            )}
+  <div style={{ ...cardStyle, marginBottom: "25px" }}>
+    <h2>Mi ficha</h2>
+    <p>
+      <strong>Fecha de nacimiento:</strong>{" "}
+      {formatearFecha(atletaActual.fechaNacimiento)}
+    </p>
+    <p><strong>DNI:</strong> {atletaActual.dni}</p>
+    <p><strong>Domicilio:</strong> {atletaActual.domicilio}</p>
+    <p><strong>Edad:</strong> {edadAtletaActual || "-"}</p>
+    <p><strong>Categoría:</strong> {categoriaAtletaActual || "-"}</p>
+    <p><strong>Grupo:</strong> {atletaActual.grupo}</p>
+  </div>
+)}
 
             <div
               style={{
