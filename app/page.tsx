@@ -19,7 +19,7 @@ type Alumno = {
 type Usuario = {
   dni: number;
   nombre: string;
-  usuario: string;
+  email: string;
   contrasena: string;
   rol: string;
   grupo: string;
@@ -244,7 +244,7 @@ const admins = [
   const [nuevoUsuario, setNuevoUsuario] = useState<Usuario>({
   dni: 0,
   nombre: "",
-  usuario: "",
+  email: "",
   contrasena: "",
   rol: "atleta",
   grupo: "",
@@ -348,7 +348,7 @@ const crearUsuario = async () => {
   if (
     !nuevoUsuario.dni ||
     !nuevoUsuario.nombre ||
-    !nuevoUsuario.usuario ||
+    !nuevoUsuario.email ||
     !nuevoUsuario.contrasena ||
     !nuevoUsuario.grupo
   ) {
@@ -366,7 +366,7 @@ const crearUsuario = async () => {
         adminEmail: usuarioAuth?.email || "",
         dni: nuevoUsuario.dni,
         nombre: nuevoUsuario.nombre,
-        email: nuevoUsuario.usuario,
+        email: nuevoUsuario.email,
         password: nuevoUsuario.contrasena,
         grupo: nuevoUsuario.grupo,
       }),
@@ -382,7 +382,7 @@ const crearUsuario = async () => {
 setNuevoUsuario({
   dni: 0,
   nombre: "",
-  usuario: "",
+  email: "",
   contrasena: "",
   rol: "atleta",
   grupo: "",
@@ -2144,14 +2144,14 @@ const carrerasAtletaOrdenadas = useMemo(() => {
       />
 
       <input
-        type="text"
-        placeholder="Email (ej: atleta1@cach.arg)"
-        value={nuevoUsuario.usuario}
-        onChange={(e) =>
-          setNuevoUsuario({ ...nuevoUsuario, usuario: e.target.value })
-        }
-        style={inputBase}
-      />
+  type="text"
+  placeholder="Email (ej: atleta1@cach.arg)"
+  value={nuevoUsuario.email}
+  onChange={(e) =>
+    setNuevoUsuario({ ...nuevoUsuario, email: e.target.value })
+  }
+  style={inputBase}
+/>
 
       <input
         type="text"
@@ -2194,7 +2194,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
 
       {usuarios.map((u) => (
         <div key={u.dni} style={{ marginBottom: "10px" }}>
-          <strong>{u.nombre}</strong> — {u.usuario} — {u.rol}
+          <strong>{u.nombre}</strong> — {u.email} — {u.rol}
         </div>
       ))}
    </div>
