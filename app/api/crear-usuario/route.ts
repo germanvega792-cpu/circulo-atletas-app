@@ -11,7 +11,17 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const { adminEmail, dni, nombre, email, password, grupo } = body;
+    const {
+  adminEmail,
+  dni,
+  nombre,
+  email,
+  password,
+  grupo,
+  fechaNacimiento,
+  edad,
+  domicilio,
+} = body;
 
     if (!ADMINS.includes(String(adminEmail).toLowerCase().trim())) {
       return NextResponse.json(
@@ -20,7 +30,7 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!dni || !nombre || !email || !password || !grupo) {
+    if (!dni || !nombre || !email || !password || !grupo || !fechaNacimiento || !edad || !domicilio) {
       return NextResponse.json(
         { error: "Faltan campos obligatorios." },
         { status: 400 }
@@ -75,9 +85,9 @@ export async function POST(req: Request) {
   dni: Number(dni),
   nombre: nombreLimpio,
   grupo: grupoLimpio,
-  fecha_nacimiento: null,
-  domicilio: "",
-  edad: "",
+  fecha_nacimiento: fechaNacimiento || null,
+  domicilio: domicilio ? String(domicilio).trim() : "",
+  edad: edad ? String(edad).trim() : "",
 });
 
     if (alumnosError) {

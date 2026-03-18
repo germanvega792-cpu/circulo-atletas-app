@@ -23,6 +23,9 @@ type Usuario = {
   contrasena: string;
   rol: string;
   grupo: string;
+  fechaNacimiento: string;
+  edad: string;
+  domicilio: string;
 };
 
 type PlanSemanal = {
@@ -195,6 +198,22 @@ function formatearFecha(fecha: string) {
   return "inicio";
   });
 
+  const calcularEdad = (fecha: string) => {
+  if (!fecha) return "";
+
+  const hoy = new Date();
+  const nacimiento = new Date(fecha);
+
+  let edad = hoy.getFullYear() - nacimiento.getFullYear();
+  const mes = hoy.getMonth() - nacimiento.getMonth();
+
+  if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+    edad--;
+  }
+
+  return edad.toString();
+};
+
   const [emailLogin, setEmailLogin] = useState("");
   const [passwordLogin, setPasswordLogin] = useState("");
 
@@ -248,6 +267,9 @@ const admins = [
   contrasena: "",
   rol: "atleta",
   grupo: "",
+  fechaNacimiento: "",
+  edad: "",
+  domicilio: "",
 });
   const atletasAtletismo = alumnos.filter(a => a.grupo === "Atletismo").length;
   const atletasRunning = alumnos.filter(a => a.grupo === "Running").length;
@@ -358,19 +380,22 @@ const crearUsuario = async () => {
 
   try {
     const response = await fetch("/api/crear-usuario", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        adminEmail: usuarioAuth?.email || "",
-        dni: nuevoUsuario.dni,
-        nombre: nuevoUsuario.nombre,
-        email: nuevoUsuario.email,
-        password: nuevoUsuario.contrasena,
-        grupo: nuevoUsuario.grupo,
-      }),
-    });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    adminEmail: usuarioAuth?.email,
+    dni: nuevoUsuario.dni,
+    nombre: nuevoUsuario.nombre,
+    email: nuevoUsuario.email,
+    password: nuevoUsuario.contrasena,
+    grupo: nuevoUsuario.grupo,
+    fechaNacimiento: nuevoUsuario.fechaNacimiento,
+    edad: nuevoUsuario.edad,
+    domicilio: nuevoUsuario.domicilio,
+  }),
+});
 
     const data = await response.json();
 
@@ -386,6 +411,9 @@ setNuevoUsuario({
   contrasena: "",
   rol: "atleta",
   grupo: "",
+  fechaNacimiento: "",
+  edad: "",
+  domicilio: "",
 });
 
 cargarUsuarios();
@@ -2172,6 +2200,37 @@ const carrerasAtletaOrdenadas = useMemo(() => {
         }
         style={inputBase}
       />
+
+      <input
+  type="date"
+  value={nuevoUsuario.fechaNacimiento}
+  onChange={(e) => {
+  const fecha = e.target.value;
+
+  setNuevoUsuario((prev) => ({
+    ...prev,
+    fechaNacimiento: fecha,
+    edad: calcularEdad(fecha),
+  }));
+}}
+  style={inputBase}
+/>
+
+{nuevoUsuario.edad && (
+  <p style={{ color: "#555", marginTop: "5px" }}>
+    Edad: {nuevoUsuario.edad} años
+  </p>
+)}
+
+<input
+  type="text"
+  placeholder="Domicilio"
+  value={nuevoUsuario.domicilio}
+  onChange={(e) =>
+    setNuevoUsuario({ ...nuevoUsuario, domicilio: e.target.value })
+  }
+  style={inputBase}
+/>
 
       <button
   onClick={crearUsuario}
