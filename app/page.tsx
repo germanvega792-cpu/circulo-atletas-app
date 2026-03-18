@@ -483,7 +483,7 @@ cargarAlumnosDesdeSupabase();
   const { data: usuarioDB, error: rolError } = await supabase
     .from("usuarios")
     .select("*")
-    .eq("usuario", data.user.email)
+    .eq("auth_id", data.user.id)
     .single();
 
   if (rolError || !usuarioDB) {
@@ -540,7 +540,7 @@ if (nombreGuardado) {
   const { data: usuarioDB, error: rolError } = await supabase
     .from("usuarios")
     .select("*")
-    .eq("usuario", data.user.email)
+    .eq("auth_id", data.user.id)
     .single();
 
   if (rolError || !usuarioDB) {
