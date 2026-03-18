@@ -1214,7 +1214,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
           <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", marginBottom: "20px" }}>
   <button
     onClick={() => {
-      localStorage.setItem("rolAppClub", "entrenador");
+      localStorage.setItem("rolAppClub", "admin");
       localStorage.removeItem("vistaActual");
       setVista("entrenador");
     }}
