@@ -218,6 +218,13 @@ function formatearFecha(fecha: string) {
 
   return "panel";
 });
+
+const admins = [
+  "germanvega@cach.arg",
+  "tomasvega@cach.arg",
+  "emirsosa@cach.arg"
+];
+
   const [datosCargados, setDatosCargados] = useState(false);
 
   const [usuarioAuth, setUsuarioAuth] = useState<any>(null);
@@ -347,49 +354,34 @@ const crearUsuario = async () => {
     !nuevoUsuario.nombre ||
     !nuevoUsuario.usuario ||
     !nuevoUsuario.contrasena ||
-    !nuevoUsuario.rol
+    !nuevoUsuario.grupo
   ) {
     alert("Completá los campos obligatorios");
     return;
   }
 
-  const usuarioAGuardar = {
-  dni: nuevoUsuario.dni,
-  nombre: nuevoUsuario.nombre,
-  usuario: nuevoUsuario.usuario,
-  contrasena: nuevoUsuario.contrasena,
-  rol: nuevoUsuario.rol,
-  grupo: nuevoUsuario.grupo || "",
-};
+  try {
+    const response = await fetch("/api/crear-usuario", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        adminEmail: usuarioEntrenador,
+        dni: nuevoUsuario.dni,
+        nombre: nuevoUsuario.nombre,
+        email: nuevoUsuario.usuario,
+        password: nuevoUsuario.contrasena,
+        grupo: nuevoUsuario.grupo,
+      }),
+    });
 
-const { error } = await supabase.from("usuarios").insert([usuarioAGuardar]);
+    const data = await response.json();
 
-if (error) {
-  console.error("Error al crear usuario:", error);
-  alert("Error al crear usuario: " + error.message);
-  return;
-}
-
-// 👉 Crear perfil deportivo automáticamente si es atleta
-if (nuevoUsuario.rol === "atleta") {
-  const perfilDeportivo = {
-    nombre: nuevoUsuario.nombre,
-    grupo: nuevoUsuario.grupo || "",
-    prueba: "",
-    nivel: "",
-    dni: nuevoUsuario.dni,
-  };
-
-  const { error: errorPerfil } = await supabase
-    .from("alumnos")
-    .insert([perfilDeportivo]);
-
-  if (errorPerfil) {
-    console.error("Error al crear perfil deportivo:", errorPerfil);
-    alert("Usuario creado, pero hubo un error al crear el perfil deportivo: " + errorPerfil.message);
-    return;
-  }
-}
+    if (!response.ok) {
+      alert(data.error || "No se pudo crear el usuario");
+      return;
+    }
 
 setNuevoUsuario({
   dni: 0,
@@ -402,6 +394,9 @@ setNuevoUsuario({
 
 cargarUsuarios();
 cargarAlumnosDesdeSupabase();
+  } catch (error) {
+    alert("Error inesperado al crear usuario");
+  }
 };
 
  useEffect(() => {
@@ -426,23 +421,6 @@ cargarAlumnosDesdeSupabase();
 
   return () => subscription.subscription.unsubscribe();
   }, []);
-
-  useEffect(() => {
-  const obtenerAlumnos = async () => {
-    const { data, error } = await supabase
-      .from("alumnos")
-      .select("*")
-      .eq("grupo", "Atletismo"); // IMPORTANTE
-
-    if (error) {
-      console.log(error);
-    } else {
-      setAlumnos(data || []);
-    }
-  };
-
-  obtenerAlumnos();
-}, []);
 
   useEffect(() => {
   cargarAlumnosDesdeSupabase();
@@ -505,7 +483,7 @@ cargarAlumnosDesdeSupabase();
   const { data: usuarioDB, error: rolError } = await supabase
     .from("usuarios")
     .select("*")
-    .eq("email", data.user.email)
+    .eq("usuario", data.user.email)
     .single();
 
   if (rolError || !usuarioDB) {
@@ -517,11 +495,11 @@ cargarAlumnosDesdeSupabase();
   setNombreUsuario(usuarioDB.nombre || "");
 localStorage.setItem("nombreUsuarioAppClub", usuarioDB.nombre || "");
 
-  if (usuarioDB.rol !== "entrenador") {
-    alert("Este usuario no es entrenador.");
-    await supabase.auth.signOut();
-    return;
-  }
+  if (usuarioDB.rol !== "admin") {
+  alert("Este usuario no es administrador.");
+  await supabase.auth.signOut();
+  return;
+}
 
   localStorage.setItem("rolAppClub", "entrenador");
   localStorage.setItem("vistaActual", "panelEntrenador");
@@ -562,7 +540,7 @@ if (nombreGuardado) {
   const { data: usuarioDB, error: rolError } = await supabase
     .from("usuarios")
     .select("*")
-    .eq("email", data.user.email)
+    .eq("usuario", data.user.email)
     .single();
 
   if (rolError || !usuarioDB) {
@@ -605,7 +583,7 @@ localStorage.setItem("nombreUsuarioAppClub", usuarioDB.nombre || "");
   const guardarMarcasAtleta = async () => {
   setGuardandoMarca(true);
 
-  const nombreBuscado = usuarioAtleta.trim();
+  const nombreBuscado = nombreUsuario.trim();
 
   const { data: atletaEncontrado, error: errorBusqueda } = await supabase
     .from("alumnos")
@@ -1065,33 +1043,18 @@ const estadisticasAsistencia = useMemo(() => {
   }, [atletaActual, carreras]);
 
   const convertirFecha = (fecha: string) => {
-  const [dia, mes, anio] = fecha.split("/");
-  return new Date(Number(anio), Number(mes) - 1, Number(dia)).getTime();
-  const formatearFecha = (fecha: string) => {
-  if (!fecha) return "";
+  if (!fecha) return 0;
+
+  if (fecha.includes("-")) {
+    return new Date(fecha + "T00:00:00").getTime();
+  }
 
   if (fecha.includes("/")) {
     const [dia, mes, anio] = fecha.split("/");
-    const nombresMeses = [
-      "enero","febrero","marzo","abril","mayo","junio",
-      "julio","agosto","septiembre","octubre","noviembre","diciembre"
-    ];
-
-    return `${Number(dia)} de ${nombresMeses[Number(mes) - 1]} de ${anio}`;
+    return new Date(Number(anio), Number(mes) - 1, Number(dia)).getTime();
   }
 
-  if (fecha.includes("-")) {
-    const [anio, mes, dia] = fecha.split("-");
-    const nombresMeses = [
-      "enero","febrero","marzo","abril","mayo","junio",
-      "julio","agosto","septiembre","octubre","noviembre","diciembre"
-    ];
-
-    return `${Number(dia)} de ${nombresMeses[Number(mes) - 1]} de ${anio}`;
-  }
-
-  return fecha;
-};
+  return 0;
 };
 
 const carrerasAtletaOrdenadas = useMemo(() => {
@@ -1405,7 +1368,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
 
             <input
               type="text"
-              placeholder="Nombre exacto del atleta"
+              placeholder="Email del atleta"
               value={usuarioAtleta}
               onChange={(e) => setUsuarioAtleta(e.target.value)}
               style={inputBase}
@@ -1491,7 +1454,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
             </div>
 
             <div style={{ display: "grid", gap: "12px" }}>
-              {(["panel", "atletas", "entrenamientos", "asistencia", "carreras", "usuarios"] as const).map((seccion) => (
+              {(["panel", "atletas", "entrenamientos", "asistencia", "carreras"] as const).map((seccion) => (
                   <button
                     key={seccion}
                     onClick={() => {
@@ -1513,6 +1476,26 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                   </button>
                 )
               )}
+              {admins.includes(usuarioEntrenador) && (
+  <button
+    onClick={() => {
+      localStorage.setItem("seccionEntrenadorActual", "usuarios");
+      setSeccionEntrenador("usuarios");
+    }}
+    style={{
+      padding: "14px",
+      borderRadius: "12px",
+      border: "none",
+      cursor: "pointer",
+      fontWeight: "bold",
+      textTransform: "capitalize",
+      backgroundColor: seccionEntrenador === "usuarios" ? "white" : "#0a7a2f",
+      color: seccionEntrenador === "usuarios" ? "#0a7a2f" : "white",
+    }}
+  >
+    usuarios
+  </button>
+)}
             </div>
 
             <button
@@ -1610,9 +1593,11 @@ const carrerasAtletaOrdenadas = useMemo(() => {
       <h3>ASISTENCIAS🙋🏻‍♂️</h3>
     </button>
 
-    <button onClick={() => setSeccionEntrenador("usuarios")} style={cardStyle}>
-      <h3>USUARIOS🏃🏻‍♂️</h3>
-    </button>
+    {admins.includes(usuarioEntrenador) && (
+  <button onClick={() => setSeccionEntrenador("usuarios")} style={cardStyle}>
+    <h3>USUARIOS🏃‍♂️</h3>
+  </button>
+)}
   </div>
 </div>
             {seccionEntrenador === "atletas" && (
@@ -2322,7 +2307,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
               </>
             )}
 
-            {seccionEntrenador === "usuarios" && (
+            {seccionEntrenador === "usuarios" && admins.includes(usuarioEntrenador) && (
 <>
     <h1 style={sectionTitleStyle}>Usuarios</h1>
 
@@ -2351,7 +2336,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
 
       <input
         type="text"
-        placeholder="Usuario (ej: tomasvega@cach)"
+        placeholder="Email (ej: atleta1@cach.arg)"
         value={nuevoUsuario.usuario}
         onChange={(e) =>
           setNuevoUsuario({ ...nuevoUsuario, usuario: e.target.value })
