@@ -52,14 +52,14 @@ export async function POST(req: Request) {
     const authUserId = authData.user.id;
 
     const { error: usuariosError } = await supabaseAdmin.from("usuarios").insert({
-      auth_id: authUserId,
-      dni: Number(dni),
-      nombre: nombreLimpio,
-      usuario: emailLimpio,
-      contrasena: String(password),
-      grupo: grupoLimpio,
-      rol: "atleta",
-    });
+  auth_id: authUserId,
+  dni: Number(dni),
+  nombre: nombreLimpio,
+  email: emailLimpio,
+  contrasena: String(password),
+  grupo: grupoLimpio,
+  rol: "atleta",
+});
 
     if (usuariosError) {
       await supabaseAdmin.auth.admin.deleteUser(authUserId);
