@@ -1271,7 +1271,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
             />
 
             <h2 style={{ marginBottom: "20px", fontSize: "34px" }}>
-              Acceso Entrenador
+              Acceso Admin PRUEBA
             </h2>
 
             <input
