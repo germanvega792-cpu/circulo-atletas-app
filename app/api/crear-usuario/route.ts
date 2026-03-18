@@ -71,17 +71,14 @@ export async function POST(req: Request) {
     }
 
     const { error: alumnosError } = await supabaseAdmin.from("alumnos").insert({
-      auth_id: authUserId,
-      dni: Number(dni),
-      nombre: nombreLimpio,
-      grupo: grupoLimpio,
-      fechaNacimiento: "",
-      domicilio: "",
-      edad: "",
-      marcasPersonales: "",
-      prueba: "",
-      nivel: "",
-    });
+  auth_id: authUserId,
+  dni: Number(dni),
+  nombre: nombreLimpio,
+  grupo: grupoLimpio,
+  fecha_nacimiento: "",
+  domicilio: "",
+  edad: "",
+});
 
     if (alumnosError) {
       await supabaseAdmin.from("usuarios").delete().eq("auth_id", authUserId);
