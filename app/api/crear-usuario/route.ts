@@ -75,7 +75,7 @@ export async function POST(req: Request) {
   dni: Number(dni),
   nombre: nombreLimpio,
   grupo: grupoLimpio,
-  fecha_nacimiento: "",
+  fecha_nacimiento: null,
   domicilio: "",
   edad: "",
 });
