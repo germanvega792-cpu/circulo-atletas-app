@@ -501,7 +501,7 @@ localStorage.setItem("nombreUsuarioAppClub", usuarioDB.nombre || "");
   return;
 }
 
-  localStorage.setItem("rolAppClub", "entrenador");
+  localStorage.setItem("rolAppClub", "admin");
   localStorage.setItem("vistaActual", "panelEntrenador");
   localStorage.setItem("sesionEntrenadorActiva", "true");
 
@@ -518,7 +518,7 @@ if (nombreGuardado) {
   setNombreUsuario(nombreGuardado);
 }
 
-  if (rolGuardado === "entrenador" && sesionEntrenadorActiva === "true") {
+  if (rolGuardado === "admin" && sesionEntrenadorActiva === "true") {
     setVista(vistaGuardada || "panelEntrenador");
   }
 
