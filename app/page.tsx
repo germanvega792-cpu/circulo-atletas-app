@@ -198,10 +198,6 @@ function formatearFecha(fecha: string) {
   const [emailLogin, setEmailLogin] = useState("");
   const [passwordLogin, setPasswordLogin] = useState("");
 
-  const [usuarioEntrenador, setUsuarioEntrenador] = useState("");
-  const [contrasenaEntrenador, setContrasenaEntrenador] = useState("");
-  const [usuarioAtleta, setUsuarioAtleta] = useState("");
-  const [contrasenaAtleta, setContrasenaAtleta] = useState("");
   const [seccionEntrenador, setSeccionEntrenador] = useState<
   "panel" | "atletas" | "entrenamientos" | "asistencia" | "carreras" | "usuarios"
 >(() => {
@@ -232,10 +228,6 @@ const admins = [
   const [datosCargados, setDatosCargados] = useState(false);
 
   const [usuarioAuth, setUsuarioAuth] = useState<any>(null);
-  const [modoAuth, setModoAuth] = useState<"inicio" | "login" | "registro">("inicio");
-  const [emailAuth, setEmailAuth] = useState("");
-  const [passwordAuth, setPasswordAuth] = useState("");
-  const [mensajeAuth, setMensajeAuth] = useState("");
   const [nombreUsuario, setNombreUsuario] = useState("");
 
   const [alumnos, setAlumnos] = useState<Alumno[]>([]);
@@ -371,7 +363,7 @@ const crearUsuario = async () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        adminEmail: usuarioEntrenador,
+        adminEmail: usuarioAuth?.email || "",
         dni: nuevoUsuario.dni,
         nombre: nuevoUsuario.nombre,
         email: nuevoUsuario.usuario,
@@ -442,19 +434,6 @@ cargarAlumnosDesdeSupabase();
   }, []);
 
   useEffect(() => {
-  const cargarMarcaDelAtleta = async () => {
-    if (!atletaActual?.nombre) return;
-    const { data, error } = await supabase
-  .from("alumnos")
-  .select("marcasPersonales")
-  .eq("nombre", atletaActual.nombre)
-  .single();
-  };
-
-  cargarMarcaDelAtleta();
-}, [usuarioAtleta]);
-
-  useEffect(() => {
     if (!datosCargados) return;
     localStorage.setItem("club_alumnos", JSON.stringify(alumnos));
   }, [alumnos, datosCargados]);
@@ -474,43 +453,6 @@ cargarAlumnosDesdeSupabase();
     localStorage.setItem("club_marcas", JSON.stringify(marcasRegistros));
   }, [marcasRegistros, datosCargados]);
 
-  const manejarIngresoEntrenador = async () => {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: usuarioEntrenador,
-    password: contrasenaEntrenador,
-  });
-
-  if (error || !data.user) {
-    alert("Email o contraseña incorrectos");
-    return;
-  }
-  const { data: usuarioDB, error: rolError } = await supabase
-    .from("usuarios")
-    .select("*")
-    .eq("auth_id", data.user.id)
-    .single();
-
-  if (rolError || !usuarioDB) {
-    alert("No se encontró el rol del usuario.");
-    await supabase.auth.signOut();
-    return;
-  }
-
-  setNombreUsuario(usuarioDB.nombre || "");
-localStorage.setItem("nombreUsuarioAppClub", usuarioDB.nombre || "");
-
-  if (usuarioDB.rol !== "admin") {
-  alert("Este usuario no es administrador.");
-  await supabase.auth.signOut();
-  return;
-}
-
-  localStorage.setItem("rolAppClub", "admin");
-  localStorage.setItem("vistaActual", "panelEntrenador");
-  localStorage.setItem("sesionEntrenadorActiva", "true");
-
-  setVista("panelEntrenador");
-};
 const manejarIngreso = async () => {
   const { data, error } = await supabase.auth.signInWithPassword({
     email: emailLogin,
@@ -575,43 +517,6 @@ if (nombreGuardado) {
 }
 }, []);
 
-  const manejarIngresoAtleta = async () => {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: usuarioAtleta,
-    password: contrasenaAtleta,
-  });
-
-  if (error || !data.user) {
-    alert("Email o contraseña incorrectos");
-    return;
-  }
-  const { data: usuarioDB, error: rolError } = await supabase
-    .from("usuarios")
-    .select("*")
-    .eq("auth_id", data.user.id)
-    .single();
-
-  if (rolError || !usuarioDB) {
-    alert("No se encontró el rol del usuario.");
-    await supabase.auth.signOut();
-    return;
-  }
-
-  setNombreUsuario(usuarioDB.nombre || "");
-localStorage.setItem("nombreUsuarioAppClub", usuarioDB.nombre || "");
-
-  if (usuarioDB.rol !== "atleta") {
-    alert("Este usuario no es atleta.");
-    await supabase.auth.signOut();
-    return;
-  }
-
-  localStorage.setItem("rolAppClub", "atleta");
-  localStorage.setItem("vistaActual", "panelAtleta");
-
-  setVista("panelAtleta");
-};
-
   const limpiarFormularioAlumno = () => {
     setNuevoAlumno({
       nombre: "",
@@ -647,7 +552,7 @@ localStorage.setItem("nombreUsuarioAppClub", usuarioDB.nombre || "");
 
   if (!atletaEncontrado) {
     setGuardandoMarca(false);
-    alert("No se encontró ningún atleta con ese nombre: " + usuarioAtleta);
+    alert("No se encontró ningún atleta con ese nombre: " + nombreUsuario);
     return;
   }
 
@@ -1036,6 +941,24 @@ setTimeout(() => {
   );
 }, [nombreUsuario, alumnos]);
 
+useEffect(() => {
+  const cargarMarcaDelAtleta = async () => {
+    if (!atletaActual?.nombre) return;
+
+    const { data, error } = await supabase
+      .from("alumnos")
+      .select("marcasPersonales")
+      .eq("nombre", atletaActual.nombre)
+      .single();
+
+    if (!error && data) {
+      setMarcaPersonalAtleta(data.marcasPersonales || "");
+    }
+  };
+
+  cargarMarcaDelAtleta();
+}, [atletaActual]);
+
   const historialAtletaSeleccionado = useMemo(() => {
     if (!alumnoSeleccionadoNombre) return [];
     return planesSemanales
@@ -1305,188 +1228,6 @@ const carrerasAtletaOrdenadas = useMemo(() => {
     </div>
   </div>
 )}
-
-      {vista === "entrenador" && (
-        <div
-          style={{
-            minHeight: "100vh",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "20px",
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: "white",
-              color: "#0a7a2f",
-              padding: "40px",
-              borderRadius: "24px",
-              width: "100%",
-              maxWidth: "520px",
-              textAlign: "center",
-            }}
-          >
-            <img
-              src="/logo.png"
-              alt="Logo del club"
-              style={{
-                width: "130px",
-                height: "130px",
-                objectFit: "contain",
-                marginBottom: "20px",
-              }}
-            />
-
-            <h2 style={{ marginBottom: "20px", fontSize: "34px" }}>
-              Acceso Admin PRUEBA
-            </h2>
-
-            <input
-              type="text"
-              placeholder="Usuario"
-              value={usuarioEntrenador}
-              onChange={(e) => setUsuarioEntrenador(e.target.value)}
-              style={inputBase}
-            />
-
-            <input
-              type="password"
-              placeholder="Contraseña"
-              value={contrasenaEntrenador}
-              onChange={(e) => setContrasenaEntrenador(e.target.value)}
-              style={inputBase}
-            />
-
-            <button
-              onClick={manejarIngresoEntrenador}
-              style={{
-                width: "100%",
-                padding: "14px",
-                fontSize: "18px",
-                backgroundColor: "#0a7a2f",
-                color: "white",
-                border: "none",
-                borderRadius: "10px",
-                cursor: "pointer",
-                fontWeight: "bold",
-                marginBottom: "15px",
-              }}
-            >
-              Ingresar
-            </button>
-
-            <button
-              onClick={() => {
-  localStorage.setItem("vistaActual", "inicio");
-  setVista("inicio");
-  }}
-              style={{
-                width: "100%",
-                padding: "12px",
-                fontSize: "16px",
-                backgroundColor: "#eaeaea",
-                color: "#0a7a2f",
-                border: "none",
-                borderRadius: "10px",
-                cursor: "pointer",
-              }}
-            >
-              Volver
-            </button>
-          </div>
-        </div>
-      )}
-
-      {vista === "atleta" && (
-        <div
-          style={{
-            minHeight: "100vh",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "20px",
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: "white",
-              color: "#0a7a2f",
-              padding: "40px",
-              borderRadius: "24px",
-              width: "100%",
-              maxWidth: "520px",
-              textAlign: "center",
-            }}
-          >
-            <img
-              src="/logo.png"
-              alt="Logo del club"
-              style={{
-                width: "130px",
-                height: "130px",
-                objectFit: "contain",
-                marginBottom: "20px",
-              }}
-            />
-
-            <h2 style={{ marginBottom: "20px", fontSize: "34px" }}>
-              Acceso Atleta
-            </h2>
-
-            <input
-              type="text"
-              placeholder="Email del atleta"
-              value={usuarioAtleta}
-              onChange={(e) => setUsuarioAtleta(e.target.value)}
-              style={inputBase}
-            />
-
-            <input
-              type="password"
-              placeholder="Contraseña"
-              value={contrasenaAtleta}
-              onChange={(e) => setContrasenaAtleta(e.target.value)}
-              style={inputBase}
-            />
-
-            <button
-              onClick={manejarIngresoAtleta}
-              style={{
-                width: "100%",
-                padding: "14px",
-                fontSize: "18px",
-                backgroundColor: "#0a7a2f",
-                color: "white",
-                border: "none",
-                borderRadius: "10px",
-                cursor: "pointer",
-                fontWeight: "bold",
-                marginBottom: "15px",
-              }}
-            >
-              Ingresar
-            </button>
-
-            <button
-              onClick={() => setVista("inicio")}
-              style={{
-                width: "100%",
-                padding: "12px",
-                fontSize: "16px",
-                backgroundColor: "#eaeaea",
-                color: "#0a7a2f",
-                border: "none",
-                borderRadius: "10px",
-                cursor: "pointer",
-              }}
-            >
-              Volver
-            </button>
-          </div>
-        </div>
-      )}
-
       {vista === "panelEntrenador" && (
         <div
           style={{
@@ -1515,9 +1256,9 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                   marginBottom: "16px",
                 }}
               />
-              <h2 style={{ fontSize: "22px", margin: 0 }}>Panel Entrenador</h2>
+              <h2 style={{ fontSize: "22px", margin: 0 }}>Panel Admin</h2>
               <p style={{ marginTop: "8px", opacity: 0.9 }}>
-                {nombreUsuario || "Entrenador"}
+                {nombreUsuario || "Admin"}
               </p>
             </div>
 
@@ -1544,7 +1285,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                   </button>
                 )
               )}
-              {admins.includes(usuarioEntrenador) && (
+              {admins.includes(usuarioAuth?.email || "") && (
   <button
     onClick={() => {
       localStorage.setItem("seccionEntrenadorActual", "usuarios");
@@ -1661,7 +1402,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
       <h3>ASISTENCIAS🙋🏻‍♂️</h3>
     </button>
 
-    {admins.includes(usuarioEntrenador) && (
+    {admins.includes(usuarioAuth?.email || "") && (
   <button onClick={() => setSeccionEntrenador("usuarios")} style={cardStyle}>
     <h3>USUARIOS🏃‍♂️</h3>
   </button>
@@ -2375,7 +2116,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
               </>
             )}
 
-            {seccionEntrenador === "usuarios" && admins.includes(usuarioEntrenador) && (
+            {seccionEntrenador === "usuarios" && admins.includes(usuarioAuth?.email || "") && (
 <>
     <h1 style={sectionTitleStyle}>Usuarios</h1>
 
