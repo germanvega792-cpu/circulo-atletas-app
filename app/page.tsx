@@ -194,6 +194,10 @@ function formatearFecha(fecha: string) {
   }
   return "inicio";
   });
+
+  const [emailLogin, setEmailLogin] = useState("");
+  const [passwordLogin, setPasswordLogin] = useState("");
+
   const [usuarioEntrenador, setUsuarioEntrenador] = useState("");
   const [contrasenaEntrenador, setContrasenaEntrenador] = useState("");
   const [usuarioAtleta, setUsuarioAtleta] = useState("");
@@ -506,6 +510,50 @@ localStorage.setItem("nombreUsuarioAppClub", usuarioDB.nombre || "");
   localStorage.setItem("sesionEntrenadorActiva", "true");
 
   setVista("panelEntrenador");
+};
+const manejarIngreso = async () => {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: emailLogin,
+    password: passwordLogin,
+  });
+
+  if (error || !data.user) {
+    alert("Email o contraseña incorrectos");
+    return;
+  }
+
+  const { data: usuarioDB, error: rolError } = await supabase
+    .from("usuarios")
+    .select("*")
+    .eq("auth_id", data.user.id)
+    .single();
+
+  if (rolError || !usuarioDB) {
+    alert("No se encontró el rol del usuario.");
+    await supabase.auth.signOut();
+    return;
+  }
+
+  setNombreUsuario(usuarioDB.nombre || "");
+  localStorage.setItem("nombreUsuarioAppClub", usuarioDB.nombre || "");
+
+  if (usuarioDB.rol === "admin") {
+    localStorage.setItem("rolAppClub", "admin");
+    localStorage.setItem("vistaActual", "panelEntrenador");
+    localStorage.setItem("sesionEntrenadorActiva", "true");
+    setVista("panelEntrenador");
+    return;
+  }
+
+  if (usuarioDB.rol === "atleta") {
+    localStorage.setItem("rolAppClub", "atleta");
+    localStorage.setItem("vistaActual", "panelAtleta");
+    setVista("panelAtleta");
+    return;
+  }
+
+  alert("Rol de usuario no válido.");
+  await supabase.auth.signOut();
 };
 
   useEffect(() => {
@@ -1179,64 +1227,84 @@ const carrerasAtletaOrdenadas = useMemo(() => {
     }}
   >
       {vista === "inicio" && (
-        <div
-          style={{
-            minHeight: "100vh",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "20px",
-            textAlign: "center",
-          }}
-        >
-          <img
-            src="/logo.png"
-            alt="Logo del club"
-            style={{
-              width: "300px",
-              height: "300px",
-              objectFit: "contain",
-              marginBottom: "30px",
-              borderRadius: "50%",
-              padding: "14px",
-            }}
-          />
-
-          <h1 style={{ fontSize: "58px", marginBottom: "20px" }}>
-            Círculo Atletas de Chivilcoy
-          </h1>
-
-          <p style={{ marginBottom: "40px", fontSize: "24px" }}>
-            Plataforma de entrenamiento del club
-          </p>
-
-          <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", marginBottom: "20px" }}>
-  <button
-    onClick={() => {
-      localStorage.setItem("rolAppClub", "admin");
-      localStorage.removeItem("vistaActual");
-      setVista("entrenador");
+  <div
+    style={{
+      minHeight: "100vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "20px",
     }}
-    style={botonBase}
   >
-    Entrenador
-  </button>
+    <div
+      style={{
+        backgroundColor: "white",
+        color: "#0a7a2f",
+        padding: "40px",
+        borderRadius: "24px",
+        width: "100%",
+        maxWidth: "520px",
+        textAlign: "center",
+      }}
+    >
+      <img
+        src="/logo.png"
+        alt="Logo del club"
+        style={{
+          width: "130px",
+          height: "130px",
+          objectFit: "contain",
+          marginBottom: "20px",
+        }}
+      />
 
-  <button
-    onClick={() => {
-      localStorage.setItem("rolAppClub", "atleta");
-      localStorage.setItem("vistaActual", "atleta");
-      setVista("atleta");
-    }}
-    style={botonBase}
-  >
-    Atleta
-  </button>
+      <h2 style={{ marginBottom: "20px", fontSize: "34px" }}>
+        Iniciar sesión
+      </h2>
+
+      <p style={{ marginBottom: "24px", fontSize: "18px" }}>
+        Círculo Atletas de Chivilcoy
+      </p>
+
+      <input
+        id="emailLogin"
+        name="emailLogin"
+        type="email"
+        placeholder="Correo electrónico"
+        value={emailLogin}
+        onChange={(e) => setEmailLogin(e.target.value)}
+        style={inputBase}
+      />
+
+      <input
+        id="passwordLogin"
+        name="passwordLogin"
+        type="password"
+        placeholder="Contraseña"
+        value={passwordLogin}
+        onChange={(e) => setPasswordLogin(e.target.value)}
+        style={inputBase}
+      />
+
+      <button
+        onClick={manejarIngreso}
+        style={{
+          width: "100%",
+          padding: "14px",
+          fontSize: "18px",
+          backgroundColor: "#0a7a2f",
+          color: "white",
+          border: "none",
+          borderRadius: "10px",
+          cursor: "pointer",
+          fontWeight: "bold",
+        }}
+      >
+        Ingresar
+      </button>
+    </div>
   </div>
-          
-        </div>
-      )}
+)}
 
       {vista === "entrenador" && (
         <div
