@@ -284,9 +284,15 @@ const admins = [
   edad: "",
   domicilio: "",
 });
-  const atletasAtletismo = alumnos.filter(a => a.grupo === "Atletismo").length;
-  const atletasRunning = alumnos.filter(a => a.grupo === "Running").length;
-  const atletasMini = alumnos.filter(a => a.grupo === "Mini Atletismo").length;
+  const atletasAtletismo = alumnos.filter((a) => a.grupo?.toLowerCase().trim() === "atletismo").length;
+  const atletasRunning = alumnos.filter((a) => a.grupo?.toLowerCase().trim() === "running").length;
+  const atletasMini = alumnos.filter((a) => a.grupo?.toLowerCase().trim() === "mini atletismo").length;
+  const alumnosFiltrados =
+  filtroGrupo === "Todos"
+    ? alumnos
+    : alumnos.filter(
+        (a) => a.grupo?.toLowerCase().trim() === filtroGrupo
+      );
   const [marcaPersonalAtleta, setMarcaPersonalAtleta] = useState("");
   const [guardandoMarca, setGuardandoMarca] = useState(false);
   const [mensajeMarca, setMensajeMarca] = useState("");
@@ -331,11 +337,6 @@ const admins = [
     marca: "",
     posicion: "",
   });
-
-  const alumnosFiltrados =
-  filtroGrupo === "Todos"
-    ? alumnos
-    : alumnos.filter((alumno) => alumno.grupo === filtroGrupo);
 
   const cargarAlumnosDesdeSupabase = async () => {
   const { data, error } = await supabase
@@ -1405,61 +1406,98 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                 gap: "20px",
               }}
               >
-      <div style={cardStyle}>
-        <h3>Atletas activos</h3>
-        <p style={{ fontSize: "34px", fontWeight: "bold" }}>{alumnos.length}</p>
-      </div>
+            <div style={cardStyle}>
+              <h3>Atletas totales</h3>
+              <h2>{alumnos.length}</h2>
+            </div>
 
-      <div style={cardStyle}>
-        <h3>Atletismo</h3>
-        <p style={{ fontSize: "34px", fontWeight: "bold" }}>{atletasAtletismo}</p>
-      </div>
+            <div
+              onClick={() => {
+                setFiltroGrupo("atletismo");
+                setSeccionEntrenador("atletas");
+              }}
+              style={{ ...cardStyle, cursor: "pointer" }}
+            >
+              <h3>Atletismo</h3>
+              <h2>{atletasAtletismo}</h2>
+            </div>
 
-      <div style={cardStyle}>
-        <h3>Running</h3>
-        <p style={{ fontSize: "34px", fontWeight: "bold" }}>{atletasRunning}</p>
-      </div>
+            <div
+              onClick={() => {
+                setFiltroGrupo("running");
+                setSeccionEntrenador("atletas");
+              }}
+              style={{ ...cardStyle, cursor: "pointer" }}
+            >
+              <h3>Running</h3>
+              <h2>{atletasRunning}</h2>
+            </div>
 
-      <div style={cardStyle}>
-        <h3>Mini atletismo</h3>
-        <p style={{ fontSize: "34px", fontWeight: "bold" }}>{atletasMini}</p>
-      </div>
-    </div>
-  </>
-  )}
-<div style={{ marginTop: "35px" }}>
-    <h2 style={{ marginBottom: "16px", fontSize: "32px", fontWeight: "bold" }}>
-  Accesos rápidos
-</h2>
+            <div
+              onClick={() => {
+                setFiltroGrupo("mini atletismo");
+                setSeccionEntrenador("atletas");
+              }}
+              style={{ ...cardStyle, cursor: "pointer" }}
+            >
+              <h3>Mini atletismo</h3>
+              <h2>{atletasMini}</h2>
+            </div>
+          </div>
+        </>
+      )}
 
-  <div
-    style={{
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-      gap: "20px",
-    }}
-  >
-    <button onClick={() => setSeccionEntrenador("atletas")} style={cardStyle}>
-      <h3>ATLETAS👟</h3>
-    </button>
+        <div style={{ marginTop: "35px" }}>
+            <h2 style={{ marginBottom: "16px", fontSize: "32px", fontWeight: "bold" }}>
+          Accesos rápidos
+        </h2>
 
-    <button onClick={() => setSeccionEntrenador("entrenamientos")} style={cardStyle}>
-      <h3>ENTRENAMIENTOS📋</h3>
-    </button>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: "20px",
+            }}
+          >
+            <button onClick={() => setSeccionEntrenador("atletas")} style={cardStyle}>
+              <h3>ATLETAS👟</h3>
+            </button>
 
-    <button onClick={() => setSeccionEntrenador("asistencia")} style={cardStyle}>
-      <h3>ASISTENCIAS🙋🏻‍♂️</h3>
-    </button>
+            <button onClick={() => setSeccionEntrenador("entrenamientos")} style={cardStyle}>
+              <h3>ENTRENAMIENTOS📋</h3>
+            </button>
 
-    {admins.includes(usuarioAuth?.email || "") && (
-  <button onClick={() => setSeccionEntrenador("usuarios")} style={cardStyle}>
-    <h3>USUARIOS🏃‍♂️</h3>
-  </button>
-)}
-  </div>
-</div>
+            <button onClick={() => setSeccionEntrenador("asistencia")} style={cardStyle}>
+              <h3>ASISTENCIAS🙋🏻‍♂️</h3>
+            </button>
+
+            {admins.includes(usuarioAuth?.email || "") && (
+          <button onClick={() => setSeccionEntrenador("usuarios")} style={cardStyle}>
+            <h3>USUARIOS🏃‍♂️</h3>
+          </button>
+        )}
+          </div>
+        </div>
             {seccionEntrenador === "atletas" && (
               <>
+              
+              {filtroGrupo !== "Todos" && (
+                <button
+                  onClick={() => setFiltroGrupo("Todos")}
+                  style={{
+                    marginBottom: "20px",
+                    padding: "10px 18px",
+                    borderRadius: "10px",
+                    border: "none",
+                    backgroundColor: "#0a7a2f",
+                    color: "white",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Mostrar todos
+                </button>
+              )}
                 <h1 style={sectionTitleStyle}>Alumnos</h1>
 
                 <div
@@ -1665,7 +1703,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                       style={inputBase}
                     >
                       <option value="">Seleccionar atleta</option>
-                      {alumnos.map((alumno) => (
+                      {alumnosFiltrados.map((alumno) => (
                         <option key={alumno.id} value={alumno.nombre}>
                           {alumno.nombre}
                         </option>
