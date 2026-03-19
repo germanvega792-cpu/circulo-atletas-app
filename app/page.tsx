@@ -1284,10 +1284,9 @@ const carrerasAtletaOrdenadas = useMemo(() => {
       {vista === "panelEntrenador" && (
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: mostrarFormularioAtleta ? "1fr 1.3fr" : "1fr",
-            gap: "20px",
-            alignItems: "start",
+            display: "flex",
+            minHeight: "100vh",
+            backgroundColor: "#f4f4f4",
           }}
         >
           <aside
@@ -1593,7 +1592,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 1.3fr",
+                    gridTemplateColumns: mostrarFormularioAtleta ? "1fr 1.3fr" : "1fr",
                     gap: "20px",
                     alignItems: "start",
                   }}
@@ -1642,17 +1641,17 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                       style={inputBase}
                     />
                     <select
-                     value={nuevoAlumno.grupo}
+                      value={nuevoAlumno.grupo}
                       onChange={(e) =>
                         setNuevoAlumno({ ...nuevoAlumno, grupo: e.target.value })
-                         }
-                         style={inputBase}
-                         >
-                          <option value="">Seleccionar grupo</option>
-                          <option value="Atletismo">Atletismo</option>
-                          <option value="Running">Running</option>
-                          <option value="Mini atletismo">Mini atletismo</option>
-                          </select>
+                      }
+                      style={inputBase}
+                    >
+                      <option value="">Seleccionar grupo</option>
+                      <option value="atletismo">Atletismo</option>
+                      <option value="running">Running</option>
+                      <option value="mini atletismo">Mini atletismo</option>
+                    </select>
 
                     <button
                       onClick={guardarAlumno}
@@ -1669,12 +1668,15 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                         marginBottom: "10px",
                       }}
                     >
-                      {modoEdicionAlumno ? "Guardar cambios" : "Guardar alumno"}
+                      {modoEdicionAlumno ? "Guardar cambios" : "Guardar atleta"}
                     </button>
 
                     {modoEdicionAlumno && (
                       <button
-                        onClick={() => {limpiarFormularioAlumno(); setMostrarFormularioAtleta(false);}}
+                        onClick={() => {
+                          limpiarFormularioAlumno();
+                          setMostrarFormularioAtleta(false);
+                        }}
                         style={{
                           width: "100%",
                           padding: "12px",
@@ -1696,15 +1698,15 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                       <h2 style={{ marginTop: 0 }}>Lista de atletas</h2>
 
                       <select
-                      value={filtroGrupo}
-                      onChange={(e) => setFiltroGrupo(e.target.value)}
-                      style={{ ...inputBase, marginBottom: "10px" }}
-                      >
+                        value={filtroGrupo}
+                        onChange={(e) => setFiltroGrupo(e.target.value)}
+                        style={{ ...inputBase, marginBottom: "10px" }}
+                      > 
                         <option value="Todos">Todos</option>
-                         <option value="Atletismo">Atletismo</option>
-                          <option value="Running">Running</option>
-                            <option value="Mini atletismo">Mini atletismo</option>
-                            </select>
+                        <option value="atletismo">Atletismo</option>
+                        <option value="running">Running</option>
+                        <option value="mini atletismo">Mini atletismo</option>
+                      </select>
 
                       <div style={{ display: "grid", gap: "14px" }}>
                         {alumnosFiltrados.map((alumno) => (
@@ -1917,9 +1919,9 @@ const carrerasAtletaOrdenadas = useMemo(() => {
           value={grupoAsistencia}
           onChange={(e) => setGrupoAsistencia(e.target.value)}
         >
-          <option value="Atletismo">Atletismo</option>
-          <option value="Running">Running</option>
-          <option value="Mini Atletismo">Mini Atletismo</option>
+          <option value="atletismo">Atletismo</option>
+          <option value="running">Running</option>
+          <option value="mini atletismo">Mini atletismo</option>
         </select>
       </div>
 
