@@ -639,9 +639,7 @@ setTimeout(() => {
   ) {
     alert("Completá todos los campos del atleta.");
     return;
-    setMostrarFormulario(false);
   }
-
   const { data, error } = await supabase
     .from("alumnos")
     .insert([
@@ -688,6 +686,7 @@ setTimeout(() => {
 
   setAlumnos([...alumnos, alumnoCreado]);
   limpiarFormularioAlumno();
+  setMostrarFormulario(false);
 };
   const editarAlumno = (alumno: Alumno) => {
     setModoEdicionAlumno(true);
@@ -1594,102 +1593,106 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                       fontWeight: "bold",
                     }}
                   >
-                    {mostrarFormulario ? "Cancelar" : "➕ Agregar atleta"}
+                    {(mostrarFormulario || modoEdicionAlumno) ? "Cancelar" : "➕ Agregar atleta"}
                   </button>
-                   <div style={cardStyle}>
-                    <h2 style={{ marginTop: 0 }}>
-                      {modoEdicionAlumno ? "Editar atleta" : "Agregar atleta"}
-                    </h2>
 
-                    <input
-                      type="text"
-                      placeholder="Nombre"
-                      value={nuevoAlumno.nombre}
-                      onChange={(e) => setNuevoAlumno({ ...nuevoAlumno, nombre: e.target.value })}
-                      style={inputBase}
-                    />
-                    <input
-                      type="date"
-                      value={nuevoAlumno.fechaNacimiento}
-                      onChange={(e) =>
-                        setNuevoAlumno({ ...nuevoAlumno, fechaNacimiento: e.target.value })
-                      }
-                      style={inputBase}
-                    />
-                    <input
-                      type="text"
-                      placeholder="DNI"
-                      value={nuevoAlumno.dni}
-                      onChange={(e) => setNuevoAlumno({ ...nuevoAlumno, dni: e.target.value })}
-                      style={inputBase}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Domicilio"
-                      value={nuevoAlumno.domicilio}
-                      onChange={(e) =>
-                        setNuevoAlumno({ ...nuevoAlumno, domicilio: e.target.value })
-                      }
-                      style={inputBase}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Edad"
-                      value={nuevoAlumno.edad}
-                      onChange={(e) => setNuevoAlumno({ ...nuevoAlumno, edad: e.target.value })}
-                      style={inputBase}
-                    />
-                    <select
-                      value={nuevoAlumno.grupo}
-                      onChange={(e) =>
-                        setNuevoAlumno({ ...nuevoAlumno, grupo: e.target.value })
-                      }
-                      style={inputBase}
-                    >
-                      <option value="">Seleccionar grupo</option>
-                      <option value="atletismo">Atletismo</option>
-                      <option value="running">Running</option>
-                      <option value="mini atletismo">Mini atletismo</option>
-                    </select>
+                  {(mostrarFormulario || modoEdicionAlumno) && (
+                    <div style={cardStyle}>
+                      <h2 style={{ marginTop: 0 }}>
+                        {modoEdicionAlumno ? "Editar atleta" : "Agregar atleta"}
+                      </h2>
 
-                    <button
-                      onClick={guardarAlumno}
-                      style={{
-                        width: "100%",
-                        padding: "14px",
-                        fontSize: "16px",
-                        backgroundColor: "#0a7a2f",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "10px",
-                        cursor: "pointer",
-                        fontWeight: "bold",
-                        marginBottom: "10px",
-                      }}
-                    >
-                      {modoEdicionAlumno ? "Guardar cambios" : "Guardar atleta"}
-                    </button>
+                      <input
+                        type="text"
+                        placeholder="Nombre"
+                        value={nuevoAlumno.nombre}
+                        onChange={(e) => setNuevoAlumno({ ...nuevoAlumno, nombre: e.target.value })}
+                        style={inputBase}
+                      />
+                      <input
+                        type="date"
+                        value={nuevoAlumno.fechaNacimiento}
+                        onChange={(e) =>
+                          setNuevoAlumno({ ...nuevoAlumno, fechaNacimiento: e.target.value })
+                        }
+                        style={inputBase}
+                      />
+                      <input
+                        type="text"
+                        placeholder="DNI"
+                        value={nuevoAlumno.dni}
+                        onChange={(e) => setNuevoAlumno({ ...nuevoAlumno, dni: e.target.value })}
+                        style={inputBase}
+                      />
+                      <input
+                        type="text"
+                        placeholder="Domicilio"
+                        value={nuevoAlumno.domicilio}
+                        onChange={(e) =>
+                          setNuevoAlumno({ ...nuevoAlumno, domicilio: e.target.value })
+                        }
+                        style={inputBase}
+                      />
+                      <input
+                        type="text"
+                        placeholder="Edad"
+                        value={nuevoAlumno.edad}
+                        onChange={(e) => setNuevoAlumno({ ...nuevoAlumno, edad: e.target.value })}
+                        style={inputBase}
+                      />
+                      <select
+                        value={nuevoAlumno.grupo}
+                        onChange={(e) =>
+                          setNuevoAlumno({ ...nuevoAlumno, grupo: e.target.value })
+                        }
+                        style={inputBase}
+                      >
+                        <option value="">Seleccionar grupo</option>
+                        <option value="atletismo">Atletismo</option>
+                        <option value="running">Running</option>
+                        <option value="mini atletismo">Mini atletismo</option>
+                      </select>
 
-                    {modoEdicionAlumno && (
                       <button
-                        onClick={() => {
-                          limpiarFormularioAlumno();
-                        }}
+                        onClick={guardarAlumno}
                         style={{
                           width: "100%",
-                          padding: "12px",
+                          padding: "14px",
                           fontSize: "16px",
-                          backgroundColor: "#eaeaea",
-                          color: "#0a7a2f",
+                          backgroundColor: "#0a7a2f",
+                          color: "white",
                           border: "none",
                           borderRadius: "10px",
                           cursor: "pointer",
+                          fontWeight: "bold",
+                          marginBottom: "10px",
                         }}
                       >
-                        Cancelar edición
+                        {modoEdicionAlumno ? "Guardar cambios" : "Guardar atleta"}
                       </button>
-                    )}
-                  </div>
+
+                      {modoEdicionAlumno && (
+                        <button
+                          onClick={() => {
+                            limpiarFormularioAlumno();
+                            setMostrarFormulario(false);
+                          }}
+                          style={{
+                            width: "100%",
+                            padding: "12px",
+                            fontSize: "16px",
+                            backgroundColor: "#eaeaea",
+                            color: "#0a7a2f",
+                            border: "none",
+                            borderRadius: "10px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Cancelar edición
+                        </button>
+                      )}
+                    </div>
+                  )}
 
                   <div style={{ display: "grid", gap: "20px" }}>
                     <div style={cardStyle}>
