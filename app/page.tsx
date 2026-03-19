@@ -262,6 +262,8 @@ const admins = [
   const [usuarioAuth, setUsuarioAuth] = useState<any>(null);
   const [nombreUsuario, setNombreUsuario] = useState("");
 
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+
   const [alumnos, setAlumnos] = useState<Alumno[]>([]);
   const [grupoAsistencia, setGrupoAsistencia] = useState("atletismo");
   const [filtroGrupo, setFiltroGrupo] = useState("Todos");
@@ -637,6 +639,7 @@ setTimeout(() => {
   ) {
     alert("Completá todos los campos del atleta.");
     return;
+    setMostrarFormulario(false);
   }
 
   const { data, error } = await supabase
@@ -1578,6 +1581,21 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                     alignItems: "start",
                   }}
                 >
+                  <button
+                    onClick={() => setMostrarFormulario(!mostrarFormulario)}
+                    style={{
+                      marginBottom: "20px",
+                      padding: "12px 20px",
+                      borderRadius: "12px",
+                      border: "none",
+                      backgroundColor: "#0a7a2f",
+                      color: "white",
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {mostrarFormulario ? "Cancelar" : "➕ Agregar atleta"}
+                  </button>
                    <div style={cardStyle}>
                     <h2 style={{ marginTop: 0 }}>
                       {modoEdicionAlumno ? "Editar atleta" : "Agregar atleta"}
