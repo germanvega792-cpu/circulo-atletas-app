@@ -262,8 +262,6 @@ const admins = [
   const [usuarioAuth, setUsuarioAuth] = useState<any>(null);
   const [nombreUsuario, setNombreUsuario] = useState("");
 
-  const [mostrarFormularioAtleta, setMostrarFormularioAtleta] = useState(false);
-
   const [alumnos, setAlumnos] = useState<Alumno[]>([]);
   const [grupoAsistencia, setGrupoAsistencia] = useState("atletismo");
   const [filtroGrupo, setFiltroGrupo] = useState("Todos");
@@ -687,7 +685,6 @@ setTimeout(() => {
 
   setAlumnos([...alumnos, alumnoCreado]);
   limpiarFormularioAlumno();
-  setMostrarFormularioAtleta(false);
 };
   const editarAlumno = (alumno: Alumno) => {
     setModoEdicionAlumno(true);
@@ -1573,28 +1570,10 @@ const carrerasAtletaOrdenadas = useMemo(() => {
               </p>
                 <h1 style={sectionTitleStyle}>Atletas</h1>
 
-                <div style={{ marginBottom: "20px" }}>
-                  <button
-                    onClick={() => setMostrarFormularioAtleta(!mostrarFormularioAtleta)}
-                    style={{
-                      padding: "12px 20px",
-                      borderRadius: "12px",
-                      border: "none",
-                      backgroundColor: "#0a7a2f",
-                      color: "white",
-                      cursor: "pointer",
-                      fontWeight: "bold",
-                      fontSize: "16px",
-                    }}
-                  >
-                    {mostrarFormularioAtleta ? "Ocultar formulario" : "Agregar atleta"}
-                  </button>
-                </div>
-
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: mostrarFormularioAtleta ? "1fr 1.3fr" : "1fr",
+                    gridTemplateColumns: "1fr",
                     gap: "20px",
                     alignItems: "start",
                   }}
@@ -1677,7 +1656,6 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                       <button
                         onClick={() => {
                           limpiarFormularioAlumno();
-                          setMostrarFormularioAtleta(false);
                         }}
                         style={{
                           width: "100%",
@@ -1740,7 +1718,6 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                               <button
                                 onClick={() => {
                                   editarAlumno(alumno);
-                                  setMostrarFormularioAtleta(true);
                                 }}
                                 style={{
                                   padding: "10px 14px",
