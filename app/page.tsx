@@ -262,6 +262,8 @@ const admins = [
   const [usuarioAuth, setUsuarioAuth] = useState<any>(null);
   const [nombreUsuario, setNombreUsuario] = useState("");
 
+  const [mostrarFormularioAtleta, setMostrarFormularioAtleta] = useState(false);
+
   const [alumnos, setAlumnos] = useState<Alumno[]>([]);
   const [grupoAsistencia, setGrupoAsistencia] = useState("atletismo");
   const [filtroGrupo, setFiltroGrupo] = useState("Todos");
@@ -685,6 +687,7 @@ setTimeout(() => {
 
   setAlumnos([...alumnos, alumnoCreado]);
   limpiarFormularioAlumno();
+  setMostrarFormularioAtleta(false);
 };
   const editarAlumno = (alumno: Alumno) => {
     setModoEdicionAlumno(true);
@@ -1282,8 +1285,9 @@ const carrerasAtletaOrdenadas = useMemo(() => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "280px 1fr",
-            minHeight: "100vh",
+            gridTemplateColumns: mostrarFormularioAtleta ? "1fr 1.3fr" : "1fr",
+            gap: "20px",
+            alignItems: "start",
           }}
         >
           <aside
@@ -1566,7 +1570,25 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                   ? `Mostrando: Mini atletismo (${alumnosFiltrados.length})`
                   : `Atletas (${alumnosFiltrados.length})`}
               </p>
-                <h1 style={sectionTitleStyle}>Alumnos</h1>
+                <h1 style={sectionTitleStyle}>Atletas</h1>
+
+                <div style={{ marginBottom: "20px" }}>
+                  <button
+                    onClick={() => setMostrarFormularioAtleta(!mostrarFormularioAtleta)}
+                    style={{
+                      padding: "12px 20px",
+                      borderRadius: "12px",
+                      border: "none",
+                      backgroundColor: "#0a7a2f",
+                      color: "white",
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                      fontSize: "16px",
+                    }}
+                  >
+                    {mostrarFormularioAtleta ? "Ocultar formulario" : "Agregar atleta"}
+                  </button>
+                </div>
 
                 <div
                   style={{
@@ -1576,9 +1598,9 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                     alignItems: "start",
                   }}
                 >
-                  <div style={cardStyle}>
+                   <div style={cardStyle}>
                     <h2 style={{ marginTop: 0 }}>
-                      {modoEdicionAlumno ? "Editar atleta" : "Agregar alumno de escuelita"}
+                      {modoEdicionAlumno ? "Editar atleta" : "Agregar atleta"}
                     </h2>
 
                     <input
@@ -1652,7 +1674,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
 
                     {modoEdicionAlumno && (
                       <button
-                        onClick={limpiarFormularioAlumno}
+                        onClick={() => {limpiarFormularioAlumno(); setMostrarFormularioAtleta(false);}}
                         style={{
                           width: "100%",
                           padding: "12px",
@@ -1712,7 +1734,10 @@ const carrerasAtletaOrdenadas = useMemo(() => {
 
                             <div style={{ display: "flex", gap: "8px" }}>
                               <button
-                                onClick={() => editarAlumno(alumno)}
+                                onClick={() => {
+                                  editarAlumno(alumno);
+                                  setMostrarFormularioAtleta(true);
+                                }}
                                 style={{
                                   padding: "10px 14px",
                                   backgroundColor: "#0a7a2f",
