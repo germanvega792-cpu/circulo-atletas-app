@@ -1391,6 +1391,8 @@ const carrerasAtletaOrdenadas = useMemo(() => {
 
           <section
             style={{
+              flex: 1,
+              minWidth: 0,
               backgroundColor: "#f4f4f4",
               color: "#0a7a2f",
               padding: "40px",
