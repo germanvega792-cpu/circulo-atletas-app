@@ -1406,7 +1406,24 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                 gap: "20px",
               }}
               >
-            <div style={cardStyle}>
+            <div
+              onClick={() => {
+                setFiltroGrupo("Todos");
+                setSeccionEntrenador("atletas");
+              }}
+              style={{
+                ...cardStyle,
+                cursor: "pointer",
+                backgroundColor: filtroGrupo === "Todos" ? "#d9f2e3" : "white",
+                border: filtroGrupo === "Todos" ? "2px solid #0a7a2f" : "2px solid transparent",
+                transform: filtroGrupo === "Todos" ? "scale(1.03)" : "scale(1)",
+                transition: "all 0.2s ease",
+                boxShadow:
+                  filtroGrupo === "Todos"
+                    ? "0 8px 20px rgba(10,122,47,0.15)"
+                    : "0 4px 10px rgba(0,0,0,0.05)",
+              }}
+            >
               <h3>Atletas totales</h3>
               <h2>{alumnos.length}</h2>
             </div>
@@ -1416,7 +1433,18 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                 setFiltroGrupo("atletismo");
                 setSeccionEntrenador("atletas");
               }}
-              style={{ ...cardStyle, cursor: "pointer" }}
+              style={{
+                ...cardStyle,
+                cursor: "pointer",
+                backgroundColor: filtroGrupo === "atletismo" ? "#d9f2e3" : "white",
+                border: filtroGrupo === "atletismo" ? "2px solid #0a7a2f" : "2px solid transparent",
+                transform: filtroGrupo === "atletismo" ? "scale(1.03)" : "scale(1)",
+                transition: "all 0.2s ease",
+                boxShadow:
+                  filtroGrupo === "atletismo"
+                    ? "0 8px 20px rgba(10,122,47,0.15)"
+                    : "0 4px 10px rgba(0,0,0,0.05)",
+              }}
             >
               <h3>Atletismo</h3>
               <h2>{atletasAtletismo}</h2>
@@ -1427,7 +1455,18 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                 setFiltroGrupo("running");
                 setSeccionEntrenador("atletas");
               }}
-              style={{ ...cardStyle, cursor: "pointer" }}
+              style={{
+                ...cardStyle,
+                cursor: "pointer",
+                backgroundColor: filtroGrupo === "running" ? "#d9f2e3" : "white",
+                border: filtroGrupo === "running" ? "2px solid #0a7a2f" : "2px solid transparent",
+                transform: filtroGrupo === "running" ? "scale(1.03)" : "scale(1)",
+                transition: "all 0.2s ease",
+                boxShadow:
+                  filtroGrupo === "running"
+                    ? "0 8px 20px rgba(10,122,47,0.15)"
+                    : "0 4px 10px rgba(0,0,0,0.05)",
+              }}
             >
               <h3>Running</h3>
               <h2>{atletasRunning}</h2>
@@ -1438,7 +1477,18 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                 setFiltroGrupo("mini atletismo");
                 setSeccionEntrenador("atletas");
               }}
-              style={{ ...cardStyle, cursor: "pointer" }}
+              style={{
+                ...cardStyle,
+                cursor: "pointer",
+                backgroundColor: filtroGrupo === "mini atletismo" ? "#d9f2e3" : "white",
+                border: filtroGrupo === "mini atletismo" ? "2px solid #0a7a2f" : "2px solid transparent",
+                transform: filtroGrupo === "mini atletismo" ? "scale(1.03)" : "scale(1)",
+                transition: "all 0.2s ease",
+                boxShadow:
+                  filtroGrupo === "mini atletismo"
+                    ? "0 8px 20px rgba(10,122,47,0.15)"
+                    : "0 4px 10px rgba(0,0,0,0.05)",
+              }}
             >
               <h3>Mini atletismo</h3>
               <h2>{atletasMini}</h2>
