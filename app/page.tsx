@@ -1548,6 +1548,24 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                   Mostrar todos
                 </button>
               )}
+              <p
+                style={{
+                  marginTop: 0,
+                  marginBottom: "10px",
+                  color: "#444",
+                  fontWeight: "bold",
+                }}
+              >
+                {filtroGrupo === "Todos"
+                  ? `Mostrando: Todos los atletas (${alumnosFiltrados.length})`
+                  : filtroGrupo === "atletismo"
+                  ? `Mostrando: Atletismo (${alumnosFiltrados.length})`
+                  : filtroGrupo === "running"
+                  ? `Mostrando: Running (${alumnosFiltrados.length})`
+                  : filtroGrupo === "mini atletismo"
+                  ? `Mostrando: Mini atletismo (${alumnosFiltrados.length})`
+                  : `Atletas (${alumnosFiltrados.length})`}
+              </p>
                 <h1 style={sectionTitleStyle}>Alumnos</h1>
 
                 <div
