@@ -631,10 +631,10 @@ const guardarAlumno = async () => {
   ]);
 
   if (error) {
-    alert("Error guardando alumno en Supabase");
-    console.error(error);
-    return;
-  }
+  alert("Error guardando alumno en Supabase: " + error.message);
+  console.error("Error completo:", error);
+  return;
+}
 
   await cargarAlumnosDesdeSupabase();
   limpiarFormularioAlumno();
