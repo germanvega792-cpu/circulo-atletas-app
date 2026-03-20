@@ -6,13 +6,13 @@ import { supabase } from "../src/lib/supabase";
 type Alumno = {
   id: number;
   nombre: string;
+  telefono: string;
   fechaNacimiento: string;
   dni: string;
   domicilio: string;
   edad: string;
   grupo: string;
 };
-
 type Usuario = {
   dni: number;
   nombre: string;
@@ -176,12 +176,14 @@ const calcularCategoria = (edad: string) => {
 
   if (!edad || isNaN(edadNumero)) return "";
 
-  if (edadNumero <= 16) return "U16";
-  if (edadNumero <= 18) return "U18";
-  if (edadNumero <= 20) return "U20";
-  if (edadNumero <= 23) return "U23";
+  if (edadNumero >= 6 && edadNumero <= 7) return "U8";
+  if (edadNumero >= 8 && edadNumero <= 9) return "U10";
+  if (edadNumero >= 10 && edadNumero <= 11) return "U12";
 
-  return "Mayores";
+  if (edadNumero >= 12 && edadNumero <= 13) return "U14";
+  if (edadNumero >= 14 && edadNumero <= 15) return "U16";
+
+  return "Fuera de categoría";
 };
 
   const [emailLogin, setEmailLogin] = useState("");
@@ -256,13 +258,14 @@ const admins = [
   const [guardandoMarca, setGuardandoMarca] = useState(false);
   const [mensajeMarca, setMensajeMarca] = useState("");
   const [nuevoAlumno, setNuevoAlumno] = useState({
-    nombre: "",
-    fechaNacimiento: "",
-    dni: "",
-    domicilio: "",
-    edad: "",
-    grupo: "",
-  });
+  nombre: "",
+  telefono: "",
+  fechaNacimiento: "",
+  dni: "",
+  domicilio: "",
+  edad: "",
+  grupo: "",
+});
 
   const [modoEdicionAlumno, setModoEdicionAlumno] = useState(false);
   const [alumnoEditandoId, setAlumnoEditandoId] = useState<number | null>(null);
@@ -305,15 +308,15 @@ const admins = [
     return;
   }
   if (data) {
-    const alumnosFormateados: Alumno[] = data.map((item: any) => ({
-      id: item.id,
-      nombre: item.nombre ?? "",
-      fechaNacimiento: item.fecha_nacimiento ?? "",
-      dni: item.dni ?? "",
-      domicilio: item.domicilio ?? "",
-      edad: item.edad ?? "",
-      grupo: item.grupo ?? "",
-    }));
+    const [nuevoAlumno, setNuevoAlumno] = useState({
+      nombre: "",
+      telefono: "",
+      fechaNacimiento: "",
+      dni: "",
+      domicilio: "",
+      edad: "",
+      grupo: "",
+    });
 
     setAlumnos(alumnosFormateados);
   }
@@ -575,6 +578,7 @@ setTimeout(() => {
 const guardarAlumno = async () => {
   if (
   !nuevoAlumno.nombre ||
+  !nuevoAlumno.telefono ||
   !nuevoAlumno.fechaNacimiento ||
   !nuevoAlumno.dni ||
   !nuevoAlumno.domicilio ||
@@ -589,6 +593,7 @@ const guardarAlumno = async () => {
       .from("alumnos")
       .update({
         nombre: nuevoAlumno.nombre,
+        telefono: nuevoAlumno.telefono,
         fecha_nacimiento: nuevoAlumno.fechaNacimiento,
         dni: nuevoAlumno.dni,
         domicilio: nuevoAlumno.domicilio,
@@ -618,6 +623,7 @@ const guardarAlumno = async () => {
       domicilio: nuevoAlumno.domicilio,
       edad: nuevoAlumno.edad,
       grupo: "mini atletismo",
+      telefono: nuevoAlumno.telefono,
     },
   ]);
 
@@ -1555,6 +1561,16 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                       />
 
                       <input
+                        type="text"
+                        placeholder="Teléfono de contacto (padres)"
+                        value={nuevoAlumno.telefono}
+                        onChange={(e) =>
+                          setNuevoAlumno({ ...nuevoAlumno, telefono: e.target.value })
+                        }
+                        style={inputBase}
+                      />
+
+                      <input
                         type="date"
                         value={nuevoAlumno.fechaNacimiento}
                         onChange={(e) => {
@@ -1663,7 +1679,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                   <div style={{ display: "grid", gap: "20px" }}>
                     <div style={cardStyle}>
                       <h2 style={{ marginTop: 0 }}>Lista de atletas</h2>
-                      
+
                       <div style={{ display: "grid", gap: "14px" }}>
                         {alumnosFiltrados.map((alumno) => (
                           <div
@@ -1720,6 +1736,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                       <div style={cardStyle}>
                         <h2 style={{ marginTop: 0 }}>Ficha del atleta</h2>
                         <p><strong>Nombre:</strong> {alumnoSeleccionado.nombre}</p>
+                        <p><strong>Teléfono:</strong> {alumnoSeleccionado.telefono || "-"}</p>
                         <p><strong>Fecha de nacimiento:</strong> {formatearFecha(alumnoSeleccionado.fechaNacimiento)}</p>
                         <p><strong>DNI:</strong> {alumnoSeleccionado.dni}</p>
                         <p><strong>Domicilio:</strong> {alumnoSeleccionado.domicilio}</p>
