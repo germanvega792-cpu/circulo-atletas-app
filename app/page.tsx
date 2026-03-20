@@ -307,20 +307,22 @@ const admins = [
     console.error("Error cargando alumnos desde Supabase:", error);
     return;
   }
+
   if (data) {
-    const [nuevoAlumno, setNuevoAlumno] = useState({
-      nombre: "",
-      telefono: "",
-      fechaNacimiento: "",
-      dni: "",
-      domicilio: "",
-      edad: "",
-      grupo: "",
-    });
+    const alumnosFormateados: Alumno[] = data.map((item: any) => ({
+      id: item.id,
+      nombre: item.nombre ?? "",
+      telefono: item.telefono ?? "",
+      fechaNacimiento: item.fecha_nacimiento ?? "",
+      dni: item.dni ?? "",
+      domicilio: item.domicilio ?? "",
+      edad: item.edad ?? "",
+      grupo: item.grupo ?? "",
+    }));
 
     setAlumnos(alumnosFormateados);
   }
-  };
+};
 
   const cargarUsuarios = async () => {
   const { data, error } = await supabase
@@ -518,6 +520,7 @@ if (nombreGuardado) {
   const limpiarFormularioAlumno = () => {
   setNuevoAlumno({
     nombre: "",
+    telefono: "",
     fechaNacimiento: "",
     dni: "",
     domicilio: "",
@@ -644,6 +647,7 @@ const guardarAlumno = async () => {
 
   setNuevoAlumno({
     nombre: alumno.nombre,
+    telefono: alumno.telefono,
     fechaNacimiento: alumno.fechaNacimiento,
     dni: alumno.dni,
     domicilio: alumno.domicilio,
