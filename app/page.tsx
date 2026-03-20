@@ -10,10 +10,7 @@ type Alumno = {
   dni: string;
   domicilio: string;
   edad: string;
-  marcasPersonales: string;
   grupo: string;
-  prueba: string;
-  nivel: string;
 };
 
 type Usuario = {
@@ -58,47 +55,7 @@ type MarcaRegistro = {
   distancia: string;
   marca: string;
   posicion: string;
-};
-
-const alumnosIniciales: Alumno[] = [
-  {
-    id: 1,
-    nombre: "Tomás Vega",
-    fechaNacimiento: "2002-05-18",
-    dni: "40111222",
-    domicilio: "Chivilcoy, Buenos Aires",
-    edad: "22",
-    marcasPersonales: "10K: 31:12 / 21K: 1:07:17",
-    grupo: "Fondo",
-    prueba: "10K",
-    nivel: "Avanzado",
-  },
-  {
-    id: 2,
-    nombre: "Sara Diamante",
-    fechaNacimiento: "2005-03-10",
-    dni: "45222333",
-    domicilio: "Chivilcoy, Buenos Aires",
-    edad: "19",
-    marcasPersonales: "1500m: 5:01 / 3000m: 10:50",
-    grupo: "Medio Fondo",
-    prueba: "1500m",
-    nivel: "Intermedio",
-  },
-  {
-    id: 3,
-    nombre: "Lautaro Molina",
-    fechaNacimiento: "2007-08-22",
-    dni: "47111444",
-    domicilio: "Chivilcoy, Buenos Aires",
-    edad: "17",
-    marcasPersonales: "Cross 5K: 19:40",
-    grupo: "Iniciación",
-    prueba: "Cross",
-    nivel: "Inicial",
-  },
-];
-
+}
 const planesIniciales: PlanSemanal[] = [
   {
     id: 1,
@@ -304,10 +261,7 @@ const admins = [
     dni: "",
     domicilio: "",
     edad: "",
-    marcasPersonales: "",
     grupo: "",
-    prueba: "",
-    nivel: "",
   });
 
   const [modoEdicionAlumno, setModoEdicionAlumno] = useState(false);
@@ -358,10 +312,7 @@ const admins = [
       dni: item.dni ?? "",
       domicilio: item.domicilio ?? "",
       edad: item.edad ?? "",
-      marcasPersonales: item.marcas_personales ?? "",
       grupo: item.grupo ?? "",
-      prueba: item.prueba ?? "",
-      nivel: item.nivel ?? "",
     }));
 
     setAlumnos(alumnosFormateados);
@@ -562,21 +513,17 @@ if (nombreGuardado) {
 }, []);
 
   const limpiarFormularioAlumno = () => {
-    setNuevoAlumno({
-      nombre: "",
-      fechaNacimiento: "",
-      dni: "",
-      domicilio: "",
-      edad: "",
-      marcasPersonales: "",
-      grupo: "",
-      prueba: "",
-      nivel: "",
-    });
-    setModoEdicionAlumno(false);
-    setAlumnoEditandoId(null);
-  };
-
+  setNuevoAlumno({
+    nombre: "",
+    fechaNacimiento: "",
+    dni: "",
+    domicilio: "",
+    edad: "",
+    grupo: "",
+  });
+  setModoEdicionAlumno(false);
+  setAlumnoEditandoId(null);
+};
   const guardarMarcasAtleta = async () => {
   setGuardandoMarca(true);
 
@@ -625,40 +572,54 @@ setTimeout(() => {
 }, 3000);
 };
 
-  const guardarAlumno = async () => {
+const guardarAlumno = async () => {
   if (
-    !nuevoAlumno.nombre ||
-    !nuevoAlumno.fechaNacimiento ||
-    !nuevoAlumno.dni ||
-    !nuevoAlumno.domicilio ||
-    !nuevoAlumno.edad ||
-    !nuevoAlumno.marcasPersonales ||
-    !nuevoAlumno.grupo ||
-    !nuevoAlumno.prueba ||
-    !nuevoAlumno.nivel
-  ) {
-    alert("Completá todos los campos del atleta.");
-    return;
-  }
-  const { data, error } = await supabase
-    .from("alumnos")
-    .insert([
-      {
+  !nuevoAlumno.nombre ||
+  !nuevoAlumno.fechaNacimiento ||
+  !nuevoAlumno.dni ||
+  !nuevoAlumno.domicilio ||
+  !nuevoAlumno.edad
+) {
+  alert("Completá todos los campos del atleta.");
+  return;
+}
+
+  if (modoEdicionAlumno && alumnoEditandoId !== null) {
+    const { error } = await supabase
+      .from("alumnos")
+      .update({
         nombre: nuevoAlumno.nombre,
         fecha_nacimiento: nuevoAlumno.fechaNacimiento,
         dni: nuevoAlumno.dni,
         domicilio: nuevoAlumno.domicilio,
         edad: nuevoAlumno.edad,
-        marcas_personales: nuevoAlumno.marcasPersonales,
-        grupo: nuevoAlumno.grupo,
-        prueba: nuevoAlumno.prueba,
-        nivel: nuevoAlumno.nivel,
-      },
-    ])
-    .select();
+        grupo: "mini atletismo",
+      })
+      .eq("id", alumnoEditandoId);
 
-  console.log("SUPABASE data:", data);
-  console.log("SUPABASE error:", error);
+    if (error) {
+      alert("Error actualizando alumno en Supabase");
+      console.error(error);
+      return;
+    }
+
+    await cargarAlumnosDesdeSupabase();
+    limpiarFormularioAlumno();
+    setMostrarFormulario(false);
+    alert("Ficha actualizada.");
+    return;
+  }
+
+  const { error } = await supabase.from("alumnos").insert([
+    {
+      nombre: nuevoAlumno.nombre,
+      fecha_nacimiento: nuevoAlumno.fechaNacimiento,
+      dni: nuevoAlumno.dni,
+      domicilio: nuevoAlumno.domicilio,
+      edad: nuevoAlumno.edad,
+      grupo: "mini atletismo",
+    },
+  ]);
 
   if (error) {
     alert("Error guardando alumno en Supabase");
@@ -667,42 +628,25 @@ setTimeout(() => {
   }
 
   await cargarAlumnosDesdeSupabase();
-
-  if (modoEdicionAlumno && alumnoEditandoId !== null) {
-    setAlumnos(
-      alumnos.map((alumno) =>
-        alumno.id === alumnoEditandoId ? { ...alumno, ...nuevoAlumno } : alumno
-      )
-    );
-    limpiarFormularioAlumno();
-    alert("Ficha actualizada.");
-    return;
-  }
-
-  const alumnoCreado: Alumno = {
-    id: Date.now(),
-    ...nuevoAlumno,
-  };
-
-  setAlumnos([...alumnos, alumnoCreado]);
   limpiarFormularioAlumno();
   setMostrarFormulario(false);
 };
   const editarAlumno = (alumno: Alumno) => {
-    setModoEdicionAlumno(true);
-    setAlumnoEditandoId(alumno.id);
-    setNuevoAlumno({
-      nombre: alumno.nombre,
-      fechaNacimiento: alumno.fechaNacimiento,
-      dni: alumno.dni,
-      domicilio: alumno.domicilio,
-      edad: alumno.edad,
-      marcasPersonales: alumno.marcasPersonales,
-      grupo: alumno.grupo,
-      prueba: alumno.prueba,
-      nivel: alumno.nivel,
-    });
-  };
+  setModoEdicionAlumno(true);
+  setAlumnoEditandoId(alumno.id);
+  setMostrarFormulario(true);
+
+  setNuevoAlumno({
+    nombre: alumno.nombre,
+    fechaNacimiento: alumno.fechaNacimiento,
+    dni: alumno.dni,
+    domicilio: alumno.domicilio,
+    edad: alumno.fechaNacimiento
+      ? calcularEdad(alumno.fechaNacimiento)
+      : alumno.edad,
+    grupo: alumno.grupo,
+  });
+};
 
   const eliminarAlumno = (id: number) => {
     const alumno = alumnos.find((a) => a.id === id);
@@ -958,7 +902,7 @@ setTimeout(() => {
     localStorage.removeItem("club_carreras");
     localStorage.removeItem("club_marcas");
 
-    setAlumnos(alumnosIniciales);
+    setAlumnos([]);
     setPlanesSemanales(planesIniciales);
     setRegistrosAsistencia([]);
     setCarreras(carrerasIniciales);
@@ -1609,14 +1553,31 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                         onChange={(e) => setNuevoAlumno({ ...nuevoAlumno, nombre: e.target.value })}
                         style={inputBase}
                       />
+
                       <input
                         type="date"
                         value={nuevoAlumno.fechaNacimiento}
-                        onChange={(e) =>
-                          setNuevoAlumno({ ...nuevoAlumno, fechaNacimiento: e.target.value })
-                        }
+                        onChange={(e) => {
+                          const fecha = e.target.value;
+
+                          setNuevoAlumno((prev) => ({
+                            ...prev,
+                            fechaNacimiento: fecha,
+                            edad: calcularEdad(fecha),
+                          }));
+                        }}
                         style={inputBase}
                       />
+
+                      {nuevoAlumno.edad && (
+                        <div style={{ marginTop: "8px", marginBottom: "15px", color: "#555" }}>
+                          <p style={{ margin: 0 }}>Edad: {nuevoAlumno.edad} años</p>
+                          <p style={{ margin: "4px 0 0 0" }}>
+                            Categoría: {calcularCategoria(nuevoAlumno.edad)}
+                          </p>
+                        </div>
+                      )}
+
                       <input
                         type="text"
                         placeholder="DNI"
@@ -1624,6 +1585,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                         onChange={(e) => setNuevoAlumno({ ...nuevoAlumno, dni: e.target.value })}
                         style={inputBase}
                       />
+
                       <input
                         type="text"
                         placeholder="Domicilio"
@@ -1633,25 +1595,29 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                         }
                         style={inputBase}
                       />
-                      <input
-                        type="text"
-                        placeholder="Edad"
-                        value={nuevoAlumno.edad}
-                        onChange={(e) => setNuevoAlumno({ ...nuevoAlumno, edad: e.target.value })}
-                        style={inputBase}
-                      />
-                      <select
-                        value={nuevoAlumno.grupo}
-                        onChange={(e) =>
-                          setNuevoAlumno({ ...nuevoAlumno, grupo: e.target.value })
-                        }
-                        style={inputBase}
+
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "12px",
+                          padding: "14px",
+                          marginBottom: "15px",
+                          borderRadius: "12px",
+                          backgroundColor: "#e8f5ec",
+                          border: "2px solid #0a7a2f",
+                          fontWeight: "bold",
+                        }}
                       >
-                        <option value="">Seleccionar grupo</option>
-                        <option value="atletismo">Atletismo</option>
-                        <option value="running">Running</option>
-                        <option value="mini atletismo">Mini atletismo</option>
-                      </select>
+                        <span style={{ fontSize: "20px" }}>🧒🏻🏃‍♂️</span>
+
+                        <div>
+                          <p style={{ margin: 0, fontSize: "16px" }}>Grupo</p>
+                          <p style={{ margin: 0, fontSize: "18px", color: "#0a7a2f" }}>
+                            Mini atletismo
+                          </p>
+                        </div>
+                      </div>
 
                       <button
                         onClick={guardarAlumno}
@@ -1697,18 +1663,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                   <div style={{ display: "grid", gap: "20px" }}>
                     <div style={cardStyle}>
                       <h2 style={{ marginTop: 0 }}>Lista de atletas</h2>
-
-                      <select
-                        value={filtroGrupo}
-                        onChange={(e) => setFiltroGrupo(e.target.value)}
-                        style={{ ...inputBase, marginBottom: "10px" }}
-                      > 
-                        <option value="Todos">Todos</option>
-                        <option value="atletismo">Atletismo</option>
-                        <option value="running">Running</option>
-                        <option value="mini atletismo">Mini atletismo</option>
-                      </select>
-
+                      
                       <div style={{ display: "grid", gap: "14px" }}>
                         {alumnosFiltrados.map((alumno) => (
                           <div
@@ -1731,7 +1686,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                             >
                               <strong style={{ fontSize: "18px" }}>{alumno.nombre}</strong>
                               <p style={{ margin: "8px 0 0 0" }}>
-                                {alumno.grupo} · {alumno.prueba} · {alumno.nivel}
+                                {alumno.grupo}
                               </p>
                             </div>
 
@@ -1769,6 +1724,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                         <p><strong>DNI:</strong> {alumnoSeleccionado.dni}</p>
                         <p><strong>Domicilio:</strong> {alumnoSeleccionado.domicilio}</p>
                         <p><strong>Edad:</strong> {alumnoSeleccionado.edad}</p>
+                        <p><strong>Categoría:</strong> {calcularCategoria(alumnoSeleccionado.edad) || "-"}</p>
                         <p><strong>Grupo:</strong> {alumnoSeleccionado.grupo}</p>
                       </div>
                     )}
