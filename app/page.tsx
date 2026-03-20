@@ -221,6 +221,8 @@ const admins = [
   const [usuarioAuth, setUsuarioAuth] = useState<any>(null);
   const [nombreUsuario, setNombreUsuario] = useState("");
 
+  const [guardandoAlumno, setGuardandoAlumno] = useState(false);
+
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
 
   const [alumnos, setAlumnos] = useState<Alumno[]>([]);
@@ -579,22 +581,69 @@ setTimeout(() => {
 };
 
 const guardarAlumno = async () => {
-  if (
-  !nuevoAlumno.nombre ||
-  !nuevoAlumno.telefono ||
-  !nuevoAlumno.fechaNacimiento ||
-  !nuevoAlumno.dni ||
-  !nuevoAlumno.domicilio ||
-  !nuevoAlumno.edad
-) {
-  alert("Completá todos los campos del atleta.");
-  return;
-}
+  if (guardandoAlumno) return;
 
-  if (modoEdicionAlumno && alumnoEditandoId !== null) {
-    const { error } = await supabase
+  if (
+    !nuevoAlumno.nombre ||
+    !nuevoAlumno.telefono ||
+    !nuevoAlumno.fechaNacimiento ||
+    !nuevoAlumno.dni ||
+    !nuevoAlumno.domicilio ||
+    !nuevoAlumno.edad
+  ) {
+    alert("Completá todos los campos del atleta.");
+    return;
+  }
+
+  setGuardandoAlumno(true);
+
+  try {
+    if (modoEdicionAlumno && alumnoEditandoId !== null) {
+      const { error } = await supabase
+        .from("alumnos")
+        .update({
+          nombre: nuevoAlumno.nombre,
+          telefono: nuevoAlumno.telefono,
+          fecha_nacimiento: nuevoAlumno.fechaNacimiento,
+          dni: nuevoAlumno.dni,
+          domicilio: nuevoAlumno.domicilio,
+          edad: nuevoAlumno.edad,
+          grupo: "mini atletismo",
+        })
+        .eq("id", alumnoEditandoId);
+
+      if (error) {
+        alert("Error actualizando alumno en Supabase: " + error.message);
+        console.error(error);
+        return;
+      }
+
+      await cargarAlumnosDesdeSupabase();
+      limpiarFormularioAlumno();
+      setMostrarFormulario(false);
+      alert("Ficha actualizada.");
+      return;
+    }
+
+    const { data: existente, error: errorBusqueda } = await supabase
       .from("alumnos")
-      .update({
+      .select("id")
+      .eq("dni", nuevoAlumno.dni)
+      .maybeSingle();
+
+    if (errorBusqueda) {
+      alert("Error verificando duplicados: " + errorBusqueda.message);
+      console.error(errorBusqueda);
+      return;
+    }
+
+    if (existente) {
+      alert("Ya existe un atleta con ese DNI.");
+      return;
+    }
+
+    const { error } = await supabase.from("alumnos").insert([
+      {
         nombre: nuevoAlumno.nombre,
         telefono: nuevoAlumno.telefono,
         fecha_nacimiento: nuevoAlumno.fechaNacimiento,
@@ -602,11 +651,11 @@ const guardarAlumno = async () => {
         domicilio: nuevoAlumno.domicilio,
         edad: nuevoAlumno.edad,
         grupo: "mini atletismo",
-      })
-      .eq("id", alumnoEditandoId);
+      },
+    ]);
 
     if (error) {
-      alert("Error actualizando alumno en Supabase");
+      alert("Error guardando alumno en Supabase: " + error.message);
       console.error(error);
       return;
     }
@@ -614,33 +663,11 @@ const guardarAlumno = async () => {
     await cargarAlumnosDesdeSupabase();
     limpiarFormularioAlumno();
     setMostrarFormulario(false);
-    alert("Ficha actualizada.");
-    return;
+  } finally {
+    setGuardandoAlumno(false);
   }
-
-  const { error } = await supabase.from("alumnos").insert([
-    {
-      nombre: nuevoAlumno.nombre,
-      fecha_nacimiento: nuevoAlumno.fechaNacimiento,
-      dni: nuevoAlumno.dni,
-      domicilio: nuevoAlumno.domicilio,
-      edad: nuevoAlumno.edad,
-      grupo: "mini atletismo",
-      telefono: nuevoAlumno.telefono,
-    },
-  ]);
-
-  if (error) {
-  alert("Error guardando alumno en Supabase: " + error.message);
-  console.error("Error completo:", error);
-  return;
-}
-
-  await cargarAlumnosDesdeSupabase();
-  limpiarFormularioAlumno();
-  setMostrarFormulario(false);
 };
-  const editarAlumno = (alumno: Alumno) => {
+const editarAlumno = (alumno: Alumno) => {
   setModoEdicionAlumno(true);
   setAlumnoEditandoId(alumno.id);
   setMostrarFormulario(true);
@@ -1641,6 +1668,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
 
                       <button
                         onClick={guardarAlumno}
+                        disabled={guardandoAlumno}
                         style={{
                           width: "100%",
                           padding: "14px",
@@ -1649,12 +1677,17 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                           color: "white",
                           border: "none",
                           borderRadius: "10px",
-                          cursor: "pointer",
+                          cursor: guardandoAlumno ? "not-allowed" : "pointer",
+                          opacity: guardandoAlumno ? 0.7 : 1,
                           fontWeight: "bold",
                           marginBottom: "10px",
                         }}
                       >
-                        {modoEdicionAlumno ? "Guardar cambios" : "Guardar atleta"}
+                        {guardandoAlumno
+                          ? "Guardando..."
+                          : modoEdicionAlumno
+                          ? "Guardar cambios"
+                          : "Guardar atleta"}
                       </button>
 
                       {modoEdicionAlumno && (
