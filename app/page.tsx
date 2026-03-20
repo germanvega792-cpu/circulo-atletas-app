@@ -183,7 +183,7 @@ const calcularCategoria = (edad: string) => {
   if (edadNumero >= 12 && edadNumero <= 13) return "U14";
   if (edadNumero >= 14 && edadNumero <= 15) return "U16";
 
-  return "Fuera de categoría";
+  return "Mayores";
 };
 
   const [emailLogin, setEmailLogin] = useState("");
