@@ -273,21 +273,6 @@ const admins = [
   edad: "",
   grupo: "",
 });
-const resumenAptos = useMemo(() => {
-  let vigentes = 0;
-  let vencidos = 0;
-  let sinCargar = 0;
-
-  alumnosFiltrados.forEach((alumno) => {
-    const estado = obtenerEstadoApto(alumno.aptoVencimiento, alumno.aptoUrl);
-
-    if (estado === "Vigente") vigentes += 1;
-    else if (estado === "Vencido") vencidos += 1;
-    else sinCargar += 1;
-  });
-
-  return { vigentes, vencidos, sinCargar };
-}, [alumnosFiltrados]);
 
   const [modoEdicionAlumno, setModoEdicionAlumno] = useState(false);
   const [alumnoEditandoId, setAlumnoEditandoId] = useState<number | null>(null);
@@ -1067,6 +1052,22 @@ const obtenerEstadoApto = (aptoVencimiento?: string, aptoUrl?: string) => {
 
   return "Vigente";
 };
+
+const resumenAptos = useMemo(() => {
+  let vigentes = 0;
+  let vencidos = 0;
+  let sinCargar = 0;
+
+  alumnosFiltrados.forEach((alumno) => {
+    const estado = obtenerEstadoApto(alumno.aptoVencimiento, alumno.aptoUrl);
+
+    if (estado === "Vigente") vigentes += 1;
+    else if (estado === "Vencido") vencidos += 1;
+    else sinCargar += 1;
+  });
+
+  return { vigentes, vencidos, sinCargar };
+}, [alumnosFiltrados]);
 
 const colorEstadoApto = (estado: string) => {
   if (estado === "Vigente") return "#0a7a2f";
