@@ -992,19 +992,26 @@ const subirAptoFisico = async (atleta: Alumno) => {
 
     const urlPublica = urlData.publicUrl;
 
-    const { error: errorUpdate } = await supabase
-      .from("alumnos")
-      .update({
-        apto_url: urlPublica,
-        apto_vencimiento: fechaVencimientoApto,
-      })
-      .eq("id", atleta.id);
+    const { data: filaActualizada, error: errorUpdate } = await supabase
+    .from("alumnos")
+    .update({
+      apto_url: urlPublica,
+      apto_vencimiento: fechaVencimientoApto,
+    })
+    .eq("id", atleta.id)
+    .select();
 
-    if (errorUpdate) {
-      console.error("Error al guardar datos del apto:", errorUpdate);
-      alert("El archivo se subió, pero no se pudo guardar en la base de datos.");
-      return;
-    }
+  if (errorUpdate) {
+    console.error("Error al guardar datos del apto:", errorUpdate);
+    alert("Error guardando en alumnos: " + errorUpdate.message);
+    return;
+  }
+
+  if (!filaActualizada || filaActualizada.length === 0) {
+    console.error("No se actualizó ninguna fila en alumnos.");
+    alert("El archivo se subió, pero no se actualizó el atleta en la tabla alumnos.");
+    return;
+  }
 
     alert("Apto físico cargado correctamente.");
 
