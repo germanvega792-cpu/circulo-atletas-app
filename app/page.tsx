@@ -12,6 +12,8 @@ type Alumno = {
   domicilio: string;
   edad: string;
   grupo: string;
+  aptoUrl?: string;
+  aptoVencimiento?: string;
 };
 type Usuario = {
   dni: number;
@@ -215,6 +217,9 @@ const admins = [
   "tomasvega@cach.arg",
   "emirsosa@cach.arg"
 ];
+  const [archivoApto, setArchivoApto] = useState<File | null>(null);
+  const [fechaVencimientoApto, setFechaVencimientoApto] = useState("");
+  const [subiendoApto, setSubiendoApto] = useState(false);
 
   const [datosCargados, setDatosCargados] = useState(false);
 
@@ -320,6 +325,8 @@ const admins = [
       domicilio: item.domicilio ?? "",
       edad: item.edad ?? "",
       grupo: item.grupo ?? "",
+      aptoUrl: item.apto_url ?? "",
+      aptoVencimiento: item.apto_vencimiento ?? "",
     }));
 
     setAlumnos(alumnosFormateados);
@@ -396,7 +403,6 @@ cargarAlumnosDesdeSupabase();
     alert("Error inesperado al crear usuario");
   }
 };
-
  useEffect(() => {
   const cargarSesion = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -554,30 +560,6 @@ if (nombreGuardado) {
     alert("No se encontró ningún atleta con ese nombre: " + nombreUsuario);
     return;
   }
-
-  const { data, error } = await supabase
-    .from("alumnos")
-    .update({ marcasPersonales: marcaPersonalAtleta })
-    .eq("id", atletaEncontrado.id)
-    .select();
-
-  setGuardandoMarca(false);
-
-  if (error) {
-    alert("Error guardando marca: " + error.message);
-    return;
-  }
-
-  if (!data || data.length === 0) {
-    alert("Se encontró el atleta, pero Supabase no permitió actualizar la marca.");
-    return;
-  }
-
-  setMensajeMarca("Marca guardada correctamente.");
-
-setTimeout(() => {
-  setMensajeMarca("");
-}, 3000);
 };
 
 const guardarAlumno = async () => {
@@ -966,6 +948,117 @@ const editarAlumno = (alumno: Alumno) => {
   );
 }, [nombreUsuario, alumnos]);
 
+useEffect(() => {
+  if (atletaActual?.aptoVencimiento) {
+    setFechaVencimientoApto(atletaActual.aptoVencimiento);
+  } else {
+    setFechaVencimientoApto("");
+  }
+}, [atletaActual]);
+
+const subirAptoFisico = async (atleta: Alumno) => {
+  if (!archivoApto) {
+    alert("Seleccioná un archivo del apto físico.");
+    return;
+  }
+
+  if (!fechaVencimientoApto) {
+    alert("Ingresá la fecha de vencimiento del apto físico.");
+    return;
+  }
+
+  try {
+    setSubiendoApto(true);
+
+    const extension = archivoApto.name.split(".").pop();
+    const nombreArchivo = `${Date.now()}.${extension}`;
+    const rutaArchivo = `${atleta.dni}/${nombreArchivo}`;
+
+    const { error: errorUpload } = await supabase.storage
+      .from("aptos")
+      .upload(rutaArchivo, archivoApto, {
+        upsert: true,
+      });
+
+    if (errorUpload) {
+      console.error("Error al subir archivo:", errorUpload);
+      alert("Hubo un error al subir el archivo.");
+      return;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from("aptos")
+      .getPublicUrl(rutaArchivo);
+
+    const urlPublica = urlData.publicUrl;
+
+    const { error: errorUpdate } = await supabase
+      .from("alumnos")
+      .update({
+        apto_url: urlPublica,
+        apto_vencimiento: fechaVencimientoApto,
+      })
+      .eq("id", atleta.id);
+
+    if (errorUpdate) {
+      console.error("Error al guardar datos del apto:", errorUpdate);
+      alert("El archivo se subió, pero no se pudo guardar en la base de datos.");
+      return;
+    }
+
+    alert("Apto físico cargado correctamente.");
+
+    const { data: alumnosActualizados, error } = await supabase
+      .from("alumnos")
+      .select("*");
+
+    if (!error && alumnosActualizados) {
+      const alumnosMapeados = alumnosActualizados.map((a: any) => ({
+      id: a.id,
+      nombre: a.nombre ?? "",
+      telefono: a.telefono ?? "",
+      fechaNacimiento: a.fecha_nacimiento ?? "",
+      dni: a.dni ?? "",
+      domicilio: a.domicilio ?? "",
+      edad: a.edad ?? "",
+      grupo: a.grupo ?? "",
+      aptoUrl: a.apto_url ?? "",
+      aptoVencimiento: a.apto_vencimiento ?? "",
+    }));
+
+      setAlumnos(alumnosMapeados);
+    }
+
+    setArchivoApto(null);
+  } catch (error) {
+    console.error("Error inesperado:", error);
+    alert("Ocurrió un error inesperado al cargar el apto.");
+  } finally {
+    setSubiendoApto(false);
+  }
+};
+
+const obtenerEstadoApto = (aptoVencimiento?: string, aptoUrl?: string) => {
+  if (!aptoUrl || !aptoVencimiento) {
+    return "Sin cargar";
+  }
+
+  const hoy = new Date();
+  const vencimiento = new Date(`${aptoVencimiento}T00:00:00`);
+
+  if (vencimiento < hoy) {
+    return "Vencido";
+  }
+
+  return "Vigente";
+};
+
+const colorEstadoApto = (estado: string) => {
+  if (estado === "Vigente") return "#0a7a2f";
+  if (estado === "Vencido") return "#c62828";
+  return "#b26a00";
+};
+
 const edadAtletaActual = atletaActual?.fechaNacimiento
   ? calcularEdad(atletaActual.fechaNacimiento)
   : atletaActual?.edad || "";
@@ -1261,112 +1354,112 @@ const carrerasAtletaOrdenadas = useMemo(() => {
     </div>
   </div>
 )}
-      {vista === "panelEntrenador" && (
-        <div
-          style={{
-            display: "flex",
-            minHeight: "100vh",
-            backgroundColor: "#f4f4f4",
-          }}
-        >
-          <aside
-            style={{
-              backgroundColor: "#066625",
-              padding: "30px 20px",
-              borderRight: "2px solid rgba(255,255,255,0.15)",
-            }}
-          >
-            <div style={{ textAlign: "center", marginBottom: "30px" }}>
-              <img
-                src="/logo.png"
-                alt="Logo del club"
+          {vista === "panelEntrenador" && (
+            <div
+              style={{
+                display: "flex",
+                minHeight: "100vh",
+                backgroundColor: "#f4f4f4",
+              }}
+            >
+              <aside
                 style={{
-                  width: "250px",
-                  height: "150px",
-                  objectFit: "contain",
-                  borderRadius: "50%",
-                  padding: "10px",
-                  marginBottom: "16px",
+                  backgroundColor: "#066625",
+                  padding: "30px 20px",
+                  borderRight: "2px solid rgba(255,255,255,0.15)",
                 }}
-              />
-              <h2 style={{ fontSize: "22px", margin: 0 }}>Panel Admin</h2>
-              <p style={{ marginTop: "8px", opacity: 0.9 }}>
-                {nombreUsuario || "Admin"}
-              </p>
-            </div>
-
-            <div style={{ display: "grid", gap: "12px" }}>
-              {(["panel", "atletas", "entrenamientos", "asistencia", "carreras"] as const).map((seccion) => (
-                  <button
-                    key={seccion}
-                    onClick={() => {
-                    localStorage.setItem("seccionEntrenadorActual", seccion);
-                    setSeccionEntrenador(seccion);
-                  }}
+              >
+                <div style={{ textAlign: "center", marginBottom: "30px" }}>
+                  <img
+                    src="/logo.png"
+                    alt="Logo del club"
                     style={{
-                      padding: "14px",
-                      borderRadius: "12px",
-                      border: "none",
-                      cursor: "pointer",
-                      fontWeight: "bold",
-                      textTransform: "capitalize",
-                      backgroundColor: seccionEntrenador === seccion ? "white" : "#0a7a2f",
-                      color: seccionEntrenador === seccion ? "#0a7a2f" : "white",
+                      width: "250px",
+                      height: "150px",
+                      objectFit: "contain",
+                      borderRadius: "50%",
+                      padding: "10px",
+                      marginBottom: "16px",
                     }}
-                  >
-                    {seccion}
-                  </button>
-                )
-              )}
-              {admins.includes(usuarioAuth?.email || "") && (
-  <button
-    onClick={() => {
-      localStorage.setItem("seccionEntrenadorActual", "usuarios");
-      setSeccionEntrenador("usuarios");
+                  />
+                  <h2 style={{ fontSize: "22px", margin: 0 }}>Panel Admin</h2>
+                  <p style={{ marginTop: "8px", opacity: 0.9 }}>
+                    {nombreUsuario || "Admin"}
+                  </p>
+                </div>
+
+                <div style={{ display: "grid", gap: "12px" }}>
+                  {(["panel", "atletas", "entrenamientos", "asistencia", "carreras"] as const).map((seccion) => (
+                      <button
+                        key={seccion}
+                        onClick={() => {
+                        localStorage.setItem("seccionEntrenadorActual", seccion);
+                        setSeccionEntrenador(seccion);
+                      }}
+                        style={{
+                          padding: "14px",
+                          borderRadius: "12px",
+                          border: "none",
+                          cursor: "pointer",
+                          fontWeight: "bold",
+                          textTransform: "capitalize",
+                          backgroundColor: seccionEntrenador === seccion ? "white" : "#0a7a2f",
+                          color: seccionEntrenador === seccion ? "#0a7a2f" : "white",
+                        }}
+                      >
+                        {seccion}
+                      </button>
+                    )
+                  )}
+                  {admins.includes(usuarioAuth?.email || "") && (
+      <button
+        onClick={() => {
+          localStorage.setItem("seccionEntrenadorActual", "usuarios");
+          setSeccionEntrenador("usuarios");
+        }}
+        style={{
+          padding: "14px",
+          borderRadius: "12px",
+          border: "none",
+          cursor: "pointer",
+          fontWeight: "bold",
+          textTransform: "capitalize",
+          backgroundColor: seccionEntrenador === "usuarios" ? "white" : "#0a7a2f",
+          color: seccionEntrenador === "usuarios" ? "#0a7a2f" : "white",
+        }}
+      >
+        usuarios
+      </button>
+    )}
+                </div>
+
+                <button
+      onClick={async () => {
+      await supabase.auth.signOut();
+
+      localStorage.removeItem("rolAppClub");
+      localStorage.removeItem("vistaActual");
+      localStorage.removeItem("seccionEntrenadorActual");
+      localStorage.removeItem("sesionEntrenadorActiva");
+      localStorage.removeItem("nombreUsuarioAppClub");
+
+      setNombreUsuario("");
+      setVista("inicio");
     }}
-    style={{
-      padding: "14px",
-      borderRadius: "12px",
-      border: "none",
-      cursor: "pointer",
-      fontWeight: "bold",
-      textTransform: "capitalize",
-      backgroundColor: seccionEntrenador === "usuarios" ? "white" : "#0a7a2f",
-      color: seccionEntrenador === "usuarios" ? "#0a7a2f" : "white",
-    }}
-  >
-    usuarios
-  </button>
-)}
-            </div>
-
-            <button
-  onClick={async () => {
-  await supabase.auth.signOut();
-
-  localStorage.removeItem("rolAppClub");
-  localStorage.removeItem("vistaActual");
-  localStorage.removeItem("seccionEntrenadorActual");
-  localStorage.removeItem("sesionEntrenadorActiva");
-  localStorage.removeItem("nombreUsuarioAppClub");
-
-  setNombreUsuario("");
-  setVista("inicio");
-}}
-  style={{
-    marginTop: "30px",
-    width: "100%",
-    padding: "14px",
-    borderRadius: "12px",
-    border: "none",
-    cursor: "pointer",
-    fontWeight: "bold",
-    backgroundColor: "#ffffff",
-    color: "#0a7a2f",
-  }}
->
-  Cerrar sesión
-</button>
+      style={{
+        marginTop: "30px",
+        width: "100%",
+        padding: "14px",
+        borderRadius: "12px",
+        border: "none",
+        cursor: "pointer",
+        fontWeight: "bold",
+        backgroundColor: "#ffffff",
+        color: "#0a7a2f",
+      }}
+    >
+      Cerrar sesión
+    </button>
           </aside>
 
           <section
@@ -1495,27 +1588,26 @@ const carrerasAtletaOrdenadas = useMemo(() => {
             }}
           >
             <button onClick={() => setSeccionEntrenador("atletas")} style={cardStyle}>
-              <h3>ATLETAS👟</h3>
+              <h3>ATLETAS</h3>
             </button>
 
             <button onClick={() => setSeccionEntrenador("entrenamientos")} style={cardStyle}>
-              <h3>ENTRENAMIENTOS📋</h3>
+              <h3>ENTRENAMIENTOS</h3>
             </button>
 
             <button onClick={() => setSeccionEntrenador("asistencia")} style={cardStyle}>
-              <h3>ASISTENCIAS🙋🏻‍♂️</h3>
+              <h3>ASISTENCIAS</h3>
             </button>
 
             {admins.includes(usuarioAuth?.email || "") && (
           <button onClick={() => setSeccionEntrenador("usuarios")} style={cardStyle}>
-            <h3>USUARIOS🏃‍♂️</h3>
+            <h3>USUARIOS</h3>
           </button>
         )}
           </div>
         </div>
             {seccionEntrenador === "atletas" && (
-              <>
-              
+              <>              
               {filtroGrupo !== "Todos" && (
                 <button
                   onClick={() => setFiltroGrupo("Todos")}
@@ -1712,7 +1804,6 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                       )}
                     </div>
                   )}
-
                   <div style={{ display: "grid", gap: "20px" }}>
                     <div style={cardStyle}>
                       <h2 style={{ marginTop: 0 }}>Lista de atletas</h2>
@@ -1722,14 +1813,15 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                           <div
                             key={alumno.id}
                             style={{
-                              border: alumnoSeleccionadoNombre === alumno.nombre
-                                ? "2px solid #0a7a2f"
-                                : "1px solid #d9d9d9",
+                              border:
+                                alumnoSeleccionadoNombre === alumno.nombre
+                                  ? "2px solid #0a7a2f"
+                                  : "1px solid #d9d9d9",
                               borderRadius: "14px",
                               padding: "16px",
                               display: "flex",
                               justifyContent: "space-between",
-                              alignItems: "center",
+                              alignItems: "flex-start",
                               gap: "14px",
                             }}
                           >
@@ -1738,16 +1830,53 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                               style={{ cursor: "pointer", flex: 1 }}
                             >
                               <strong style={{ fontSize: "18px" }}>{alumno.nombre}</strong>
-                              <p style={{ margin: "8px 0 0 0" }}>
-                                {alumno.grupo}
+                              <p style={{ margin: "8px 0 0 0" }}>{alumno.grupo}</p>
+
+                              <p style={{ margin: "6px 0 0 0", color: "#444" }}>
+                                Apto físico:{" "}
+                                <strong
+                                  style={{
+                                    color: colorEstadoApto(
+                                      obtenerEstadoApto(alumno.aptoVencimiento, alumno.aptoUrl)
+                                    ),
+                                  }}
+                                >
+                                  {obtenerEstadoApto(alumno.aptoVencimiento, alumno.aptoUrl)}
+                                </strong>
                               </p>
+
+                              <p style={{ margin: "6px 0 0 0", color: "#444" }}>
+                                Vencimiento:{" "}
+                                <strong>
+                                  {alumno.aptoVencimiento
+                                    ? new Date(
+                                        `${alumno.aptoVencimiento}T00:00:00`
+                                      ).toLocaleDateString("es-AR")
+                                    : "Sin cargar"}
+                                </strong>
+                              </p>
+
+                              {alumno.aptoUrl && (
+                                <a
+                                  href={alumno.aptoUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  style={{
+                                    display: "inline-block",
+                                    marginTop: "8px",
+                                    color: "#0a7a2f",
+                                    fontWeight: "bold",
+                                    textDecoration: "none",
+                                  }}
+                                >
+                                  Ver archivo
+                                </a>
+                              )}
                             </div>
 
                             <div style={{ display: "flex", gap: "8px" }}>
                               <button
-                                onClick={() => {
-                                  editarAlumno(alumno);
-                                }}
+                                onClick={() => editarAlumno(alumno)}
                                 style={{
                                   padding: "10px 14px",
                                   backgroundColor: "#0a7a2f",
@@ -1760,7 +1889,11 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                               >
                                 Editar
                               </button>
-                              <button onClick={() => eliminarAlumno(alumno.id)} style={deleteButtonStyle}>
+
+                              <button
+                                onClick={() => eliminarAlumno(alumno.id)}
+                                style={deleteButtonStyle}
+                              >
                                 Eliminar
                               </button>
                             </div>
@@ -1774,20 +1907,25 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                         <h2 style={{ marginTop: 0 }}>Ficha del atleta</h2>
                         <p><strong>Nombre:</strong> {alumnoSeleccionado.nombre}</p>
                         <p><strong>Teléfono:</strong> {alumnoSeleccionado.telefono || "-"}</p>
-                        <p><strong>Fecha de nacimiento:</strong> {formatearFecha(alumnoSeleccionado.fechaNacimiento)}</p>
+                        <p>
+                          <strong>Fecha de nacimiento:</strong>{" "}
+                          {formatearFecha(alumnoSeleccionado.fechaNacimiento)}
+                        </p>
                         <p><strong>DNI:</strong> {alumnoSeleccionado.dni}</p>
                         <p><strong>Domicilio:</strong> {alumnoSeleccionado.domicilio}</p>
                         <p><strong>Edad:</strong> {alumnoSeleccionado.edad}</p>
-                        <p><strong>Categoría:</strong> {calcularCategoria(alumnoSeleccionado.edad) || "-"}</p>
-                        <p><strong>Grupo:</strong> {alumnoSeleccionado.grupo}</p>
-                      </div>
-                    )}
-                  </div>
+                        <p>
+                          <strong>Categoría:</strong>{" "}
+                          {calcularCategoria(alumnoSeleccionado.edad) || "-"}
+                        </p>
+                      <p><strong>Grupo:</strong> {alumnoSeleccionado.grupo}</p>
+                    </div>
+                  )}
                 </div>
-              </>
-            )}
-
-            {seccionEntrenador === "entrenamientos" && (
+              </div>
+            </>
+          )}
+          {seccionEntrenador === "entrenamientos" && (
               <>
                 <h1 style={sectionTitleStyle}>Entrenamientos semanales</h1>
 
@@ -1918,7 +2056,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
               </>
             )}
 
-{seccionEntrenador === "asistencia" && (
+            {seccionEntrenador === "asistencia" && (
   <>
     <h1 style={sectionTitleStyle}>Asistencia</h1>
 
@@ -2134,6 +2272,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
     </div>
   </>
 )}
+
             {seccionEntrenador === "carreras" && (
               <>
                 <div
@@ -2474,19 +2613,19 @@ const carrerasAtletaOrdenadas = useMemo(() => {
             </div>
 
             {atletaActual && (
-  <div style={{ ...cardStyle, marginBottom: "25px" }}>
-    <h2>Mi ficha</h2>
-    <p>
-      <strong>Fecha de nacimiento:</strong>{" "}
-      {formatearFecha(atletaActual.fechaNacimiento)}
-    </p>
-    <p><strong>DNI:</strong> {atletaActual.dni}</p>
-    <p><strong>Domicilio:</strong> {atletaActual.domicilio}</p>
-    <p><strong>Edad:</strong> {edadAtletaActual || "-"}</p>
-    <p><strong>Categoría:</strong> {categoriaAtletaActual || "-"}</p>
-    <p><strong>Grupo:</strong> {atletaActual.grupo}</p>
-  </div>
-)}
+              <div style={{ ...cardStyle, marginBottom: "25px" }}>
+                <h2>Mi ficha</h2>
+                <p>
+                  <strong>Fecha de nacimiento:</strong>{" "}
+                  {formatearFecha(atletaActual.fechaNacimiento)}
+                </p>
+                <p><strong>DNI:</strong> {atletaActual.dni}</p>
+                <p><strong>Domicilio:</strong> {atletaActual.domicilio}</p>
+                <p><strong>Edad:</strong> {edadAtletaActual || "-"}</p>
+                <p><strong>Categoría:</strong> {categoriaAtletaActual || "-"}</p>
+                <p><strong>Grupo:</strong> {atletaActual.grupo}</p>
+              </div>
+            )}
 
             <div
               style={{
@@ -2530,11 +2669,11 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                   value={marcaPersonalAtleta}
                   onChange={(e) => setMarcaPersonalAtleta(e.target.value)}
                   placeholder={`Ejemplo:
-1500m - 4:05
-3000m - 8:45
-5000m - 15:10
-10K - 31:40
-21K - 1:07:17`}
+                      1500m - 4:05
+                      3000m - 8:45
+                      5000m - 15:10
+                      10K - 31:40
+                      21K - 1:07:17`}
                   style={{
                     width: "100%",
                     minHeight: "140px",
@@ -2602,6 +2741,114 @@ const carrerasAtletaOrdenadas = useMemo(() => {
               )}
             </div>
 
+                      {atletaActual && (
+            <div
+              style={{
+                backgroundColor: "white",
+                borderRadius: "24px",
+                padding: "30px",
+                marginBottom: "25px",
+                boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
+              }}
+            >
+              <h2 style={{ marginTop: 0, marginBottom: "18px", fontSize: "28px" }}>
+                🏥 Mi apto físico
+              </h2>
+
+              <p style={{ marginBottom: "10px", color: "#444" }}>
+                Estado actual:{" "}
+                <span
+                  style={{
+                    fontWeight: "bold",
+                    color: colorEstadoApto(
+                      obtenerEstadoApto(
+                        atletaActual.aptoVencimiento,
+                        atletaActual.aptoUrl
+                      )
+                    ),
+                  }}
+                >
+                  {obtenerEstadoApto(
+                    atletaActual.aptoVencimiento,
+                    atletaActual.aptoUrl
+                  )}
+                </span>
+              </p>
+
+              <p style={{ marginBottom: "10px", color: "#444" }}>
+                Fecha de vencimiento:{" "}
+                <strong>
+                  {atletaActual.aptoVencimiento
+                    ? new Date(
+                        `${atletaActual.aptoVencimiento}T00:00:00`
+                      ).toLocaleDateString("es-AR")
+                    : "Sin cargar"}
+                </strong>
+              </p>
+
+              {atletaActual.aptoUrl ? (
+                <p style={{ marginBottom: "18px" }}>
+                  <a
+                    href={atletaActual.aptoUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      color: "#0a7a2f",
+                      fontWeight: "bold",
+                      textDecoration: "none",
+                    }}
+                  >
+                    Ver apto físico cargado
+                  </a>
+                </p>
+              ) : (
+                <p style={{ marginBottom: "18px", color: "#666" }}>
+                  Todavía no cargaste ningún apto físico.
+                </p>
+              )}
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                <input
+                  type="file"
+                  accept=".pdf,image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    setArchivoApto(file);
+                  }}
+                />
+
+                <input
+                  type="date"
+                  value={fechaVencimientoApto}
+                  onChange={(e) => setFechaVencimientoApto(e.target.value)}
+                  style={{
+                    padding: "12px",
+                    borderRadius: "10px",
+                    border: "1px solid #ccc",
+                    fontSize: "16px",
+                  }}
+                />
+
+                <button
+                  onClick={() => subirAptoFisico(atletaActual)}
+                  disabled={subiendoApto}
+                  style={{
+                    padding: "12px 18px",
+                    borderRadius: "12px",
+                    border: "none",
+                    backgroundColor: subiendoApto ? "#999" : "#0a7a2f",
+                    color: "white",
+                    fontWeight: "bold",
+                    cursor: subiendoApto ? "not-allowed" : "pointer",
+                    fontSize: "16px",
+                  }}
+                >
+                  {subiendoApto ? "Subiendo..." : "Subir apto físico"}
+                </button>
+              </div>
+            </div>
+          )}
+
             <button
               onClick={async () => {
                 await supabase.auth.signOut();
@@ -2612,16 +2859,16 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                           setVista("inicio");
                         }}
 
-              style={{
-                marginTop: "25px",
-                padding: "14px 24px",
-                backgroundColor: "#0a7a2f",
-                color: "white",
-                border: "none",
-                borderRadius: "12px",
-                cursor: "pointer",
-                fontWeight: "bold",
-              }}
+                        style={{
+                          marginTop: "25px",
+                          padding: "14px 24px",
+                          backgroundColor: "#0a7a2f",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "12px",
+                          cursor: "pointer",
+                          fontWeight: "bold",
+                        }}
             >
               Cerrar sesión
             </button>
