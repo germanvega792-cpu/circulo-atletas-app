@@ -273,6 +273,21 @@ const admins = [
   edad: "",
   grupo: "",
 });
+const resumenAptos = useMemo(() => {
+  let vigentes = 0;
+  let vencidos = 0;
+  let sinCargar = 0;
+
+  alumnosFiltrados.forEach((alumno) => {
+    const estado = obtenerEstadoApto(alumno.aptoVencimiento, alumno.aptoUrl);
+
+    if (estado === "Vigente") vigentes += 1;
+    else if (estado === "Vencido") vencidos += 1;
+    else sinCargar += 1;
+  });
+
+  return { vigentes, vencidos, sinCargar };
+}, [alumnosFiltrados]);
 
   const [modoEdicionAlumno, setModoEdicionAlumno] = useState(false);
   const [alumnoEditandoId, setAlumnoEditandoId] = useState<number | null>(null);
@@ -1644,7 +1659,56 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                   : `Atletas (${alumnosFiltrados.length})`}
               </p>
                 <h1 style={sectionTitleStyle}>Atletas</h1>
+                <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                  gap: "14px",
+                  marginBottom: "20px",
+                }}
+              >
+                <div
+                  style={{
+                    backgroundColor: "#f6fff8",
+                    border: "1px solid #b7e4c7",
+                    borderRadius: "14px",
+                    padding: "16px",
+                  }}
+                >
+                  <div style={{ fontSize: "16px", marginBottom: "6px" }}>🟢 Vigentes</div>
+                  <div style={{ fontSize: "28px", fontWeight: "bold", color: "#0a7a2f" }}>
+                    {resumenAptos.vigentes}
+                  </div>
+                </div>
 
+                <div
+                  style={{
+                    backgroundColor: "#fff5f5",
+                    border: "1px solid #f5c2c7",
+                    borderRadius: "14px",
+                    padding: "16px",
+                  }}
+                >
+                  <div style={{ fontSize: "16px", marginBottom: "6px" }}>🔴 Vencidos</div>
+                  <div style={{ fontSize: "28px", fontWeight: "bold", color: "#c62828" }}>
+                    {resumenAptos.vencidos}
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    backgroundColor: "#fffaf0",
+                    border: "1px solid #f2d6a2",
+                    borderRadius: "14px",
+                    padding: "16px",
+                  }}
+                >
+                  <div style={{ fontSize: "16px", marginBottom: "6px" }}>🟠 Sin cargar</div>
+                  <div style={{ fontSize: "28px", fontWeight: "bold", color: "#b26a00" }}>
+                    {resumenAptos.sinCargar}
+                  </div>
+                </div>
+              </div>
                 <div
                   style={{
                     display: "grid",
@@ -1809,96 +1873,106 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                       <h2 style={{ marginTop: 0 }}>Lista de atletas</h2>
 
                       <div style={{ display: "grid", gap: "14px" }}>
-                        {alumnosFiltrados.map((alumno) => (
-                          <div
-                            key={alumno.id}
-                            style={{
-                              border:
-                                alumnoSeleccionadoNombre === alumno.nombre
-                                  ? "2px solid #0a7a2f"
-                                  : "1px solid #d9d9d9",
-                              borderRadius: "14px",
-                              padding: "16px",
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "flex-start",
-                              gap: "14px",
-                            }}
-                          >
+                        {alumnosFiltrados.map((alumno) => {
+                          const estadoApto = obtenerEstadoApto(alumno.aptoVencimiento, alumno.aptoUrl);
+
+                          return (
                             <div
-                              onClick={() => setAlumnoSeleccionadoNombre(alumno.nombre)}
-                              style={{ cursor: "pointer", flex: 1 }}
+                              key={alumno.id}
+                              style={{
+                                border:
+                                  alumnoSeleccionadoNombre === alumno.nombre
+                                    ? "2px solid #0a7a2f"
+                                    : "1px solid #d9d9d9",
+                                borderRadius: "14px",
+                                padding: "16px",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "flex-start",
+                                gap: "14px",
+                                backgroundColor:
+                                  estadoApto === "Vencido"
+                                    ? "#fff5f5"
+                                    : estadoApto === "Vigente"
+                                    ? "#f6fff8"
+                                    : "white",
+                              }}
                             >
-                              <strong style={{ fontSize: "18px" }}>{alumno.nombre}</strong>
-                              <p style={{ margin: "8px 0 0 0" }}>{alumno.grupo}</p>
+                              <div
+                                onClick={() => setAlumnoSeleccionadoNombre(alumno.nombre)}
+                                style={{ cursor: "pointer", flex: 1 }}
+                              >
+                                <strong style={{ fontSize: "18px" }}>{alumno.nombre}</strong>
+                                <p style={{ margin: "8px 0 0 0" }}>{alumno.grupo}</p>
 
-                              <p style={{ margin: "6px 0 0 0", color: "#444" }}>
-                                Apto físico:{" "}
-                                <strong
+                                <p style={{ margin: "8px 0 0 0", color: "#444" }}>
+                                  Apto físico:{" "}
+                                  <strong
+                                    style={{
+                                      color: colorEstadoApto(estadoApto),
+                                    }}
+                                  >
+                                    {estadoApto}
+                                  </strong>
+                                </p>
+
+                                <p style={{ margin: "6px 0 0 0", color: "#444" }}>
+                                  Vencimiento:{" "}
+                                  <strong>
+                                    {alumno.aptoVencimiento
+                                      ? new Date(`${alumno.aptoVencimiento}T00:00:00`).toLocaleDateString("es-AR")
+                                      : "Sin cargar"}
+                                  </strong>
+                                </p>
+
+                                {alumno.aptoUrl ? (
+                                  <a
+                                    href={alumno.aptoUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{
+                                      display: "inline-block",
+                                      marginTop: "8px",
+                                      color: "#0a7a2f",
+                                      fontWeight: "bold",
+                                      textDecoration: "none",
+                                    }}
+                                  >
+                                    Ver archivo
+                                  </a>
+                                ) : (
+                                  <p style={{ margin: "8px 0 0 0", color: "#777" }}>
+                                    No hay archivo cargado
+                                  </p>
+                                )}
+                              </div>
+
+                              <div style={{ display: "flex", gap: "8px" }}>
+                                <button
+                                  onClick={() => editarAlumno(alumno)}
                                   style={{
-                                    color: colorEstadoApto(
-                                      obtenerEstadoApto(alumno.aptoVencimiento, alumno.aptoUrl)
-                                    ),
-                                  }}
-                                >
-                                  {obtenerEstadoApto(alumno.aptoVencimiento, alumno.aptoUrl)}
-                                </strong>
-                              </p>
-
-                              <p style={{ margin: "6px 0 0 0", color: "#444" }}>
-                                Vencimiento:{" "}
-                                <strong>
-                                  {alumno.aptoVencimiento
-                                    ? new Date(
-                                        `${alumno.aptoVencimiento}T00:00:00`
-                                      ).toLocaleDateString("es-AR")
-                                    : "Sin cargar"}
-                                </strong>
-                              </p>
-
-                              {alumno.aptoUrl && (
-                                <a
-                                  href={alumno.aptoUrl}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  style={{
-                                    display: "inline-block",
-                                    marginTop: "8px",
-                                    color: "#0a7a2f",
+                                    padding: "10px 14px",
+                                    backgroundColor: "#0a7a2f",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: "10px",
+                                    cursor: "pointer",
                                     fontWeight: "bold",
-                                    textDecoration: "none",
                                   }}
                                 >
-                                  Ver archivo
-                                </a>
-                              )}
-                            </div>
+                                  Editar
+                                </button>
 
-                            <div style={{ display: "flex", gap: "8px" }}>
-                              <button
-                                onClick={() => editarAlumno(alumno)}
-                                style={{
-                                  padding: "10px 14px",
-                                  backgroundColor: "#0a7a2f",
-                                  color: "white",
-                                  border: "none",
-                                  borderRadius: "10px",
-                                  cursor: "pointer",
-                                  fontWeight: "bold",
-                                }}
-                              >
-                                Editar
-                              </button>
-
-                              <button
-                                onClick={() => eliminarAlumno(alumno.id)}
-                                style={deleteButtonStyle}
-                              >
-                                Eliminar
-                              </button>
+                                <button
+                                  onClick={() => eliminarAlumno(alumno.id)}
+                                  style={deleteButtonStyle}
+                                >
+                                  Eliminar
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
 
@@ -1919,6 +1993,49 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                           {calcularCategoria(alumnoSeleccionado.edad) || "-"}
                         </p>
                       <p><strong>Grupo:</strong> {alumnoSeleccionado.grupo}</p>
+                      <p>
+                        <strong>Apto físico:</strong>{" "}
+                        <span
+                          style={{
+                            color: colorEstadoApto(
+                              obtenerEstadoApto(
+                                alumnoSeleccionado.aptoVencimiento,
+                                alumnoSeleccionado.aptoUrl
+                              )
+                            ),
+                            fontWeight: "bold",
+                          }}
+                        >
+                          {obtenerEstadoApto(
+                            alumnoSeleccionado.aptoVencimiento,
+                            alumnoSeleccionado.aptoUrl
+                          )}
+                        </span>
+                      </p>
+
+                      <p>
+                        <strong>Vencimiento del apto:</strong>{" "}
+                        {alumnoSeleccionado.aptoVencimiento
+                          ? new Date(`${alumnoSeleccionado.aptoVencimiento}T00:00:00`).toLocaleDateString("es-AR")
+                          : "Sin cargar"}
+                      </p>
+
+                      {alumnoSeleccionado.aptoUrl && (
+                        <p>
+                          <a
+                            href={alumnoSeleccionado.aptoUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{
+                              color: "#0a7a2f",
+                              fontWeight: "bold",
+                              textDecoration: "none",
+                            }}
+                          >
+                            Ver apto físico
+                          </a>
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
