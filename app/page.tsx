@@ -34,21 +34,6 @@ type PlanSemanal = {
   contenido: string;
 };
 
-type AsistenciaRegistro = {
-  id: string;
-  fecha: string;
-  asistencia: {
-    [nombreAtleta: string]: "Sí" | "No" | "";
-  };
-};
-
-type Carrera = {
-  id: number;
-  nombre: string;
-  fecha: string;
-  inscritos: string[];
-};
-
 type MarcaRegistro = {
   id: number;
   atleta: string;
@@ -94,21 +79,6 @@ Jueves: Rodaje controlado
 Viernes: Descanso activo
 Sábado: Pasadas cortas
 Domingo: Descanso`,
-  },
-];
-
-const carrerasIniciales: Carrera[] = [
-  {
-    id: 1,
-    nombre: "Noche de Lobos",
-    fecha: "2026-05-18",
-    inscritos: ["Tomás Vega", "Sara Diamante"],
-  },
-  {
-    id: 2,
-    nombre: "10K Chivilcoy",
-    fecha: "2026-06-02",
-    inscritos: ["Tomás Vega", "Lautaro Molina"],
   },
 ];
 
@@ -192,7 +162,7 @@ const calcularCategoria = (edad: string) => {
   const [passwordLogin, setPasswordLogin] = useState("");
 
   const [seccionEntrenador, setSeccionEntrenador] = useState<
-  "panel" | "atletas" | "entrenamientos" | "asistencia" | "carreras" | "usuarios"
+  "panel" | "atletas" | "entrenamientos" | "usuarios"
 >(() => {
   if (typeof window !== "undefined") {
     const valorGuardado = localStorage.getItem("seccionEntrenadorActual");
@@ -201,8 +171,6 @@ const calcularCategoria = (edad: string) => {
       valorGuardado === "panel" ||
       valorGuardado === "atletas" ||
       valorGuardado === "entrenamientos" ||
-      valorGuardado === "asistencia" ||
-      valorGuardado === "carreras" ||
       valorGuardado === "usuarios"
     ) {
       return valorGuardado;
@@ -231,16 +199,10 @@ const admins = [
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
 
   const [alumnos, setAlumnos] = useState<Alumno[]>([]);
-  const [grupoAsistencia, setGrupoAsistencia] = useState("atletismo");
   const [filtroGrupo, setFiltroGrupo] = useState("Todos");
   const [planesSemanales, setPlanesSemanales] = useState<PlanSemanal[]>([]);
-  const [registrosAsistencia, setRegistrosAsistencia] = useState<AsistenciaRegistro[]>([]);
-  const [fechaSeleccionada, setFechaSeleccionada] = useState<AsistenciaRegistro | null>(null);
-  const [carreras, setCarreras] = useState<Carrera[]>([]);
   const [marcasRegistros, setMarcasRegistros] = useState<MarcaRegistro[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [fechaHistorialSeleccionada, setFechaHistorialSeleccionada] = useState("");
-  const [registroEditandoId, setRegistroEditandoId] = useState<string | null>(null);
   const [nuevoUsuario, setNuevoUsuario] = useState<Usuario>({
   dni: 0,
   nombre: "",
@@ -261,9 +223,6 @@ const admins = [
     : alumnos.filter(
         (a) => a.grupo?.toLowerCase().trim() === filtroGrupo
       );
-  const [marcaPersonalAtleta, setMarcaPersonalAtleta] = useState("");
-  const [guardandoMarca, setGuardandoMarca] = useState(false);
-  const [mensajeMarca, setMensajeMarca] = useState("");
   const [nuevoAlumno, setNuevoAlumno] = useState({
   nombre: "",
   telefono: "",
@@ -282,26 +241,6 @@ const admins = [
   atleta: "",
   fechaSemana: "",
   contenido: "",
-  });
-
-  const [fechaAsistencia, setFechaAsistencia] = useState("");
-  const [asistenciaDia, setAsistenciaDia] = useState<{ [nombreAtleta: string]: "Sí" | "No" | "" }>({});
-
-  const [nuevaCarrera, setNuevaCarrera] = useState({
-    nombre: "",
-    fecha: "",
-  });
-
-  const [carreraSeleccionadaId, setCarreraSeleccionadaId] = useState<number | null>(null);
-  const [mostrarFormularioCarrera, setMostrarFormularioCarrera] = useState(false);
-
-  const [nuevoRegistroMarca, setNuevoRegistroMarca] = useState({
-    atleta: "",
-    fecha: "",
-    carrera: "",
-    distancia: "",
-    marca: "",
-    posicion: "",
   });
 
   const cargarAlumnosDesdeSupabase = async () => {
@@ -431,11 +370,9 @@ cargarAlumnosDesdeSupabase();
   cargarUsuarios();
 
   const planesGuardados = localStorage.getItem("club_planes");
-    const carrerasGuardadas = localStorage.getItem("club_carreras");
     const marcasGuardadas = localStorage.getItem("club_marcas");
 
     setPlanesSemanales(planesGuardados ? JSON.parse(planesGuardados) : planesIniciales);
-    setCarreras(carrerasGuardadas ? JSON.parse(carrerasGuardadas) : carrerasIniciales);
     setMarcasRegistros(marcasGuardadas ? JSON.parse(marcasGuardadas) : marcasIniciales);
 
     setDatosCargados(true);
@@ -450,11 +387,6 @@ cargarAlumnosDesdeSupabase();
     if (!datosCargados) return;
     localStorage.setItem("club_planes", JSON.stringify(planesSemanales));
   }, [planesSemanales, datosCargados]);
-
-  useEffect(() => {
-    if (!datosCargados) return;
-    localStorage.setItem("club_carreras", JSON.stringify(carreras));
-  }, [carreras, datosCargados]);
 
   useEffect(() => {
     if (!datosCargados) return;
@@ -537,29 +469,6 @@ if (nombreGuardado) {
   });
   setModoEdicionAlumno(false);
   setAlumnoEditandoId(null);
-};
-  const guardarMarcasAtleta = async () => {
-  setGuardandoMarca(true);
-
-  const nombreBuscado = nombreUsuario.trim();
-
-  const { data: atletaEncontrado, error: errorBusqueda } = await supabase
-    .from("alumnos")
-    .select("id, nombre")
-    .eq("nombre", nombreBuscado)
-    .maybeSingle();
-
-  if (errorBusqueda) {
-    setGuardandoMarca(false);
-    alert("Error buscando atleta: " + errorBusqueda.message);
-    return;
-  }
-
-  if (!atletaEncontrado) {
-    setGuardandoMarca(false);
-    alert("No se encontró ningún atleta con ese nombre: " + nombreUsuario);
-    return;
-  }
 };
 
 const guardarAlumno = async () => {
@@ -667,31 +576,30 @@ const editarAlumno = (alumno: Alumno) => {
   });
 };
 
-  const eliminarAlumno = (id: number) => {
-    const alumno = alumnos.find((a) => a.id === id);
-    setAlumnos(alumnos.filter((a) => a.id !== id));
+const eliminarAlumno = async (id: number) => {
+  const alumno = alumnos.find((a) => a.id === id);
+  if (!alumno) return;
 
-    if (alumno) {
-      setPlanesSemanales(planesSemanales.filter((p) => p.atleta !== alumno.nombre));
-      setRegistrosAsistencia(
-        registrosAsistencia.map((registro) => {
-          const nuevaAsistencia = { ...registro.asistencia };
-          delete nuevaAsistencia[alumno.nombre];
-          return { ...registro, asistencia: nuevaAsistencia };
-        })
-      );
-      setCarreras(
-        carreras.map((c) => ({
-          ...c,
-          inscritos: c.inscritos.filter((nombre) => nombre !== alumno.nombre),
-        }))
-      );
-      setMarcasRegistros(marcasRegistros.filter((m) => m.atleta !== alumno.nombre));
-      if (alumnoSeleccionadoNombre === alumno.nombre) {
-        setAlumnoSeleccionadoNombre("");
-      }
-    }
-  };
+  const confirmar = confirm(`¿Seguro que querés eliminar a ${alumno.nombre}?`);
+  if (!confirmar) return;
+
+  const { error } = await supabase
+    .from("alumnos")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    alert("Error eliminando atleta: " + error.message);
+    return;
+  }
+
+  setAlumnos(alumnos.filter((a) => a.id !== id));
+  setPlanesSemanales(planesSemanales.filter((p) => p.atleta !== alumno.nombre));
+
+  if (alumnoSeleccionadoNombre === alumno.nombre) {
+    setAlumnoSeleccionadoNombre("");
+  }
+};
 
   const cargarPlanDeAtleta = (nombreAtleta: string) => {
   const historial = planesSemanales
@@ -745,171 +653,10 @@ const editarAlumno = (alumno: Alumno) => {
   }
 
   alert("Semana guardada correctamente.");
-};
+};  
 
-  const cargarAsistenciaPorFecha = (fecha: string) => {
-    setFechaAsistencia(fecha);
-    const registro = registrosAsistencia.find((r) => r.fecha === fecha);
-    if (registro) {
-      setAsistenciaDia(registro.asistencia);
-    } else {
-      setAsistenciaDia({});
-    }
-  };
 
-  const cargarAsistenciaDesdeHistorial = (fecha: string) => {
-  setFechaHistorialSeleccionada(fecha);
 
-  const registro = registrosAsistencia.find((item) => item.fecha === fecha);
-  if (!registro) return;
-
-  setFechaAsistencia(registro.fecha);
-  setAsistenciaDia({ ...registro.asistencia });
-
-  console.log("Registro seleccionado:", registro);
-  console.log("Tipo de id:", typeof registro.id, "Valor:", registro.id);
-
-  setRegistroEditandoId(registro.id);
-};
-
-  const guardarAsistencia = async () => {
-  if (!fechaAsistencia) {
-    alert("Seleccioná una fecha");
-    return;
-  }
-
-  const nuevoRegistro = {
-    fecha: fechaAsistencia,
-    asistencia: asistenciaDia,
-  };
-
-  if (registroEditandoId !== null) {
-    const { error } = await supabase
-      .from("asistencias")
-      .update(nuevoRegistro)
-      .eq("id", registroEditandoId);
-
-    if (error) {
-      alert("Error al actualizar en Supabase: " + error.message);
-      return;
-    }
-
-    setRegistrosAsistencia(
-      registrosAsistencia.map((r) =>
-        r.id === registroEditandoId
-          ? { ...r, fecha: fechaAsistencia, asistencia: asistenciaDia }
-          : r
-      )
-    );
-
-  } else {
-    const yaExiste = registrosAsistencia.find(
-      (r) => r.fecha === fechaAsistencia
-    );
-
-    if (yaExiste) {
-      alert("Ya existe una asistencia para esa fecha. Seleccionala desde el historial para editarla.");
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("asistencias")
-      .insert([nuevoRegistro])
-      .select();
-
-    if (error) {
-      alert("Error al guardar en Supabase: " + error.message);
-      return;
-    }
-
-    if (data && data.length > 0) {
-      setRegistrosAsistencia([
-        ...registrosAsistencia,
-        data[0],
-      ]);
-    }
-
-  }
-
-  setAsistenciaDia({});
-  setFechaAsistencia("");
-  setFechaHistorialSeleccionada("");
-  setRegistroEditandoId(null);
-};
-
-  const agregarCarrera = () => {
-    if (!nuevaCarrera.nombre || !nuevaCarrera.fecha) {
-      alert("Completá nombre y fecha de la carrera.");
-      return;
-    }
-
-    const carreraCreada: Carrera = {
-      id: Date.now(),
-      nombre: nuevaCarrera.nombre,
-      fecha: nuevaCarrera.fecha,
-      inscritos: [],
-    };
-
-    setCarreras([...carreras, carreraCreada]);
-    setNuevaCarrera({ nombre: "", fecha: "" });
-    setMostrarFormularioCarrera(false);
-  };
-
-  const eliminarCarrera = (id: number) => {
-    setCarreras(carreras.filter((c) => c.id !== id));
-    if (carreraSeleccionadaId === id) {
-      setCarreraSeleccionadaId(null);
-    }
-  };
-
-  const toggleInscripcionAtleta = (carreraId: number, atleta: string) => {
-    setCarreras(
-      carreras.map((carrera) => {
-        if (carrera.id !== carreraId) return carrera;
-
-        const yaInscripto = carrera.inscritos.includes(atleta);
-
-        return {
-          ...carrera,
-          inscritos: yaInscripto
-            ? carrera.inscritos.filter((nombre) => nombre !== atleta)
-            : [...carrera.inscritos, atleta],
-        };
-      })
-    );
-  };
-
-  const agregarRegistroMarca = () => {
-    if (
-      !nuevoRegistroMarca.atleta ||
-      !nuevoRegistroMarca.fecha ||
-      !nuevoRegistroMarca.carrera ||
-      !nuevoRegistroMarca.distancia ||
-      !nuevoRegistroMarca.marca
-    ) {
-      alert("Completá los datos del registro.");
-      return;
-    }
-
-    const nuevo: MarcaRegistro = {
-      id: Date.now(),
-      ...nuevoRegistroMarca,
-    };
-
-    setMarcasRegistros([...marcasRegistros, nuevo]);
-    setNuevoRegistroMarca({
-      atleta: "",
-      fecha: "",
-      carrera: "",
-      distancia: "",
-      marca: "",
-      posicion: "",
-    });
-  };
-
-  const eliminarRegistroMarca = (id: number) => {
-    setMarcasRegistros(marcasRegistros.filter((m) => m.id !== id));
-  };
 
   const resetearDatos = () => {
     const confirmar = confirm("¿Seguro que querés borrar todos los datos guardados?");
@@ -917,18 +664,11 @@ const editarAlumno = (alumno: Alumno) => {
 
     localStorage.removeItem("club_alumnos");
     localStorage.removeItem("club_planes");
-    localStorage.removeItem("club_asistencias");
-    localStorage.removeItem("club_carreras");
     localStorage.removeItem("club_marcas");
 
     setAlumnos([]);
     setPlanesSemanales(planesIniciales);
-    setRegistrosAsistencia([]);
-    setCarreras(carrerasIniciales);
     setMarcasRegistros(marcasIniciales);
-    setAsistenciaDia({});
-    setFechaAsistencia("");
-    setCarreraSeleccionadaId(null);
     setAlumnoSeleccionadoNombre("");
     limpiarFormularioAlumno();
 
@@ -991,6 +731,8 @@ const subirAptoFisico = async (atleta: Alumno) => {
       .getPublicUrl(rutaArchivo);
 
     const urlPublica = urlData.publicUrl;
+
+    console.log("Atleta a actualizar:", atleta);
 
     const { data: filaActualizada, error: errorUpdate } = await supabase
     .from("alumnos")
@@ -1090,23 +832,6 @@ const categoriaAtletaActual = edadAtletaActual
   ? calcularCategoria(edadAtletaActual)
   : "";
 
-useEffect(() => {
-  const cargarMarcaDelAtleta = async () => {
-    if (!atletaActual?.nombre) return;
-
-    const { data, error } = await supabase
-      .from("alumnos")
-      .select("marcasPersonales")
-      .eq("nombre", atletaActual.nombre)
-      .single();
-
-    if (!error && data) {
-      setMarcaPersonalAtleta(data.marcasPersonales || "");
-    }
-  };
-
-  cargarMarcaDelAtleta();
-}, [atletaActual]);
 
   const historialAtletaSeleccionado = useMemo(() => {
     if (!alumnoSeleccionadoNombre) return [];
@@ -1114,40 +839,7 @@ useEffect(() => {
       .filter((p) => p.atleta === alumnoSeleccionadoNombre)
       .sort((a, b) => b.fechaSemana.localeCompare(a.fechaSemana));
   }, [planesSemanales, alumnoSeleccionadoNombre]);
-const estadisticasAsistencia = useMemo(() => {
-  if (!alumnos.length || !registrosAsistencia.length) return [];
 
-  return alumnos
-    .map((alumno) => {
-      let presentes = 0;
-      let ausentes = 0;
-      let totalTomadas = 0;
-
-      registrosAsistencia.forEach((registro) => {
-        const estado = registro.asistencia?.[alumno.nombre];
-
-        if (estado === "Sí") {
-          presentes += 1;
-          totalTomadas += 1;
-        } else if (estado === "No") {
-          ausentes += 1;
-          totalTomadas += 1;
-        }
-      });
-
-      const porcentaje =
-        totalTomadas > 0 ? Math.round((presentes / totalTomadas) * 100) : 0;
-
-      return {
-        nombre: alumno.nombre,
-        presentes,
-        ausentes,
-        totalTomadas,
-        porcentaje,
-      };
-    })
-    .sort((a, b) => b.porcentaje - a.porcentaje || b.presentes - a.presentes);
-}, [alumnos, registrosAsistencia]);
   const planAtleta = useMemo(() => {
     if (!atletaActual) return null;
     return (
@@ -1157,88 +849,9 @@ const estadisticasAsistencia = useMemo(() => {
     );
   }, [atletaActual, planesSemanales]);
 
-  const carrerasAtleta = useMemo(() => {
-    if (!atletaActual) return [];
-    return carreras.filter((c) => c.inscritos.includes(atletaActual.nombre));
-  }, [atletaActual, carreras]);
-
-  const convertirFecha = (fecha: string) => {
-  if (!fecha) return 0;
-
-  if (fecha.includes("-")) {
-    return new Date(fecha + "T00:00:00").getTime();
-  }
-
-  if (fecha.includes("/")) {
-    const [dia, mes, anio] = fecha.split("/");
-    return new Date(Number(anio), Number(mes) - 1, Number(dia)).getTime();
-  }
-
-  return 0;
-};
-
-const carrerasAtletaOrdenadas = useMemo(() => {
-  return [...carrerasAtleta].sort(
-    (a, b) => convertirFecha(a.fecha) - convertirFecha(b.fecha)
-  );
-}, [carrerasAtleta]);
-
-  const carreraSeleccionada = useMemo(() => {
-    return carreras.find((c) => c.id === carreraSeleccionadaId) || null;
-  }, [carreras, carreraSeleccionadaId]);
-
   const alumnoSeleccionado = useMemo(() => {
     return alumnos.find((a) => a.nombre === alumnoSeleccionadoNombre) || null;
   }, [alumnos, alumnoSeleccionadoNombre]);
-
-  const alumnosParaAsistencia = alumnos.filter(
-  (alumno) =>
-    (alumno.grupo || "").trim().toLowerCase() ===
-    grupoAsistencia.trim().toLowerCase()
-);
-
-  const registrosMarcasAtletaSeleccionado = useMemo(() => {
-    if (!alumnoSeleccionadoNombre) return [];
-    return marcasRegistros
-      .filter((m) => m.atleta === alumnoSeleccionadoNombre)
-      .sort((a, b) => b.fecha.localeCompare(a.fecha));
-  }, [marcasRegistros, alumnoSeleccionadoNombre]);
-
-  const registrosMarcasAtletaActual = useMemo(() => {
-    if (!atletaActual) return [];
-    return marcasRegistros
-      .filter((m) => m.atleta === atletaActual.nombre)
-      .sort((a, b) => b.fecha.localeCompare(a.fecha));
-  }, [marcasRegistros, atletaActual]);
-
-  const asistenciasAtletaActual = useMemo(() => {
-    if (!atletaActual) return [];
-    return registrosAsistencia.filter(
-      (registro) => registro.asistencia[atletaActual.nombre] === "Sí" || registro.asistencia[atletaActual.nombre] === "No"
-    );
-  }, [registrosAsistencia, atletaActual]);
-
-  const asistenciasPositivasAtletaActual = useMemo(() => {
-    if (!atletaActual) return 0;
-    return registrosAsistencia.filter((registro) => registro.asistencia[atletaActual.nombre] === "Sí")
-      .length;
-  }, [registrosAsistencia, atletaActual]);
-
-  const porcentajeAsistenciaAtletaActual = useMemo(() => {
-    if (!atletaActual || asistenciasAtletaActual.length === 0) return 0;
-    return Math.round((asistenciasPositivasAtletaActual / asistenciasAtletaActual.length) * 100);
-  }, [atletaActual, asistenciasAtletaActual.length, asistenciasPositivasAtletaActual]);
-
-  const botonBase = {
-    padding: "14px 28px",
-    fontSize: "18px",
-    backgroundColor: "white",
-    color: "#0a7a2f",
-    border: "none",
-    borderRadius: "12px",
-    cursor: "pointer",
-    fontWeight: "bold" as const,
-  };
 
   const inputBase = {
     width: "100%",
@@ -1289,15 +902,16 @@ const carrerasAtletaOrdenadas = useMemo(() => {
     );
     }
 
-    return (
+return (
+<>
     <main
-    style={{
-      backgroundColor:"#0a7a2f",
-      minHeight: "100vh",
-      color: "white",
-      fontFamily: "Arial, sans-serif",
-    }}
-  >
+      style={{
+        backgroundColor:"#0a7a2f",
+        minHeight: "100vh",
+        color: "white",
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
       {vista === "inicio" && (
   <div
     style={{
@@ -1412,7 +1026,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                 </div>
 
                 <div style={{ display: "grid", gap: "12px" }}>
-                  {(["panel", "atletas", "entrenamientos", "asistencia", "carreras"] as const).map((seccion) => (
+                  {(["panel", "atletas", "entrenamientos"] as const).map((seccion) => (
                       <button
                         key={seccion}
                         onClick={() => {
@@ -1494,141 +1108,136 @@ const carrerasAtletaOrdenadas = useMemo(() => {
               padding: "40px",
             }}
           >
-            {seccionEntrenador === "panel" && (
-              <>
-              <h1 style={sectionTitleStyle}>Panel del entrenador</h1>
-              <p style={{ marginTop: "-10px", color: "#666"}}>
+ {seccionEntrenador === "panel" && (
+  <>
+    <h1 style={sectionTitleStyle}>Panel del entrenador</h1>
+    <p style={{ marginTop: "-10px", color: "#666" }}></p>
 
-              </p>
-              <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                gap: "20px",
-              }}
-              >
-            <div
-              onClick={() => {
-                setFiltroGrupo("Todos");
-                setSeccionEntrenador("atletas");
-              }}
-              style={{
-                ...cardStyle,
-                cursor: "pointer",
-                backgroundColor: filtroGrupo === "Todos" ? "#d9f2e3" : "white",
-                border: filtroGrupo === "Todos" ? "2px solid #0a7a2f" : "2px solid transparent",
-                transform: filtroGrupo === "Todos" ? "scale(1.03)" : "scale(1)",
-                transition: "all 0.2s ease",
-                boxShadow:
-                  filtroGrupo === "Todos"
-                    ? "0 8px 20px rgba(10,122,47,0.15)"
-                    : "0 4px 10px rgba(0,0,0,0.05)",
-              }}
-            >
-              <h3>Atletas totales</h3>
-              <h2>{alumnos.length}</h2>
-            </div>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+        gap: "20px",
+      }}
+    >
+      <div
+        onClick={() => {
+          setFiltroGrupo("Todos");
+          setSeccionEntrenador("atletas");
+        }}
+        style={{
+          ...cardStyle,
+          cursor: "pointer",
+          backgroundColor: filtroGrupo === "Todos" ? "#d9f2e3" : "white",
+          border: filtroGrupo === "Todos" ? "2px solid #0a7a2f" : "2px solid transparent",
+          transform: filtroGrupo === "Todos" ? "scale(1.03)" : "scale(1)",
+          transition: "all 0.2s ease",
+          boxShadow:
+            filtroGrupo === "Todos"
+              ? "0 8px 20px rgba(10,122,47,0.15)"
+              : "0 4px 10px rgba(0,0,0,0.05)",
+        }}
+      >
+        <h3>Atletas totales</h3>
+        <h2>{alumnos.length}</h2>
+      </div>
 
-            <div
-              onClick={() => {
-                setFiltroGrupo("atletismo");
-                setSeccionEntrenador("atletas");
-              }}
-              style={{
-                ...cardStyle,
-                cursor: "pointer",
-                backgroundColor: filtroGrupo === "atletismo" ? "#d9f2e3" : "white",
-                border: filtroGrupo === "atletismo" ? "2px solid #0a7a2f" : "2px solid transparent",
-                transform: filtroGrupo === "atletismo" ? "scale(1.03)" : "scale(1)",
-                transition: "all 0.2s ease",
-                boxShadow:
-                  filtroGrupo === "atletismo"
-                    ? "0 8px 20px rgba(10,122,47,0.15)"
-                    : "0 4px 10px rgba(0,0,0,0.05)",
-              }}
-            >
-              <h3>Atletismo</h3>
-              <h2>{atletasAtletismo}</h2>
-            </div>
+      <div
+        onClick={() => {
+          setFiltroGrupo("atletismo");
+          setSeccionEntrenador("atletas");
+        }}
+        style={{
+          ...cardStyle,
+          cursor: "pointer",
+          backgroundColor: filtroGrupo === "atletismo" ? "#d9f2e3" : "white",
+          border: filtroGrupo === "atletismo" ? "2px solid #0a7a2f" : "2px solid transparent",
+          transform: filtroGrupo === "atletismo" ? "scale(1.03)" : "scale(1)",
+          transition: "all 0.2s ease",
+          boxShadow:
+            filtroGrupo === "atletismo"
+              ? "0 8px 20px rgba(10,122,47,0.15)"
+              : "0 4px 10px rgba(0,0,0,0.05)",
+        }}
+      >
+        <h3>Atletismo</h3>
+        <h2>{atletasAtletismo}</h2>
+      </div>
 
-            <div
-              onClick={() => {
-                setFiltroGrupo("running");
-                setSeccionEntrenador("atletas");
-              }}
-              style={{
-                ...cardStyle,
-                cursor: "pointer",
-                backgroundColor: filtroGrupo === "running" ? "#d9f2e3" : "white",
-                border: filtroGrupo === "running" ? "2px solid #0a7a2f" : "2px solid transparent",
-                transform: filtroGrupo === "running" ? "scale(1.03)" : "scale(1)",
-                transition: "all 0.2s ease",
-                boxShadow:
-                  filtroGrupo === "running"
-                    ? "0 8px 20px rgba(10,122,47,0.15)"
-                    : "0 4px 10px rgba(0,0,0,0.05)",
-              }}
-            >
-              <h3>Running</h3>
-              <h2>{atletasRunning}</h2>
-            </div>
+      <div
+        onClick={() => {
+          setFiltroGrupo("running");
+          setSeccionEntrenador("atletas");
+        }}
+        style={{
+          ...cardStyle,
+          cursor: "pointer",
+          backgroundColor: filtroGrupo === "running" ? "#d9f2e3" : "white",
+          border: filtroGrupo === "running" ? "2px solid #0a7a2f" : "2px solid transparent",
+          transform: filtroGrupo === "running" ? "scale(1.03)" : "scale(1)",
+          transition: "all 0.2s ease",
+          boxShadow:
+            filtroGrupo === "running"
+              ? "0 8px 20px rgba(10,122,47,0.15)"
+              : "0 4px 10px rgba(0,0,0,0.05)",
+        }}
+      >
+        <h3>Running</h3>
+        <h2>{atletasRunning}</h2>
+      </div>
 
-            <div
-              onClick={() => {
-                setFiltroGrupo("mini atletismo");
-                setSeccionEntrenador("atletas");
-              }}
-              style={{
-                ...cardStyle,
-                cursor: "pointer",
-                backgroundColor: filtroGrupo === "mini atletismo" ? "#d9f2e3" : "white",
-                border: filtroGrupo === "mini atletismo" ? "2px solid #0a7a2f" : "2px solid transparent",
-                transform: filtroGrupo === "mini atletismo" ? "scale(1.03)" : "scale(1)",
-                transition: "all 0.2s ease",
-                boxShadow:
-                  filtroGrupo === "mini atletismo"
-                    ? "0 8px 20px rgba(10,122,47,0.15)"
-                    : "0 4px 10px rgba(0,0,0,0.05)",
-              }}
-            >
-              <h3>Mini atletismo</h3>
-              <h2>{atletasMini}</h2>
-            </div>
-          </div>
-        </>
-      )}
+      <div
+        onClick={() => {
+          setFiltroGrupo("mini atletismo");
+          setSeccionEntrenador("atletas");
+        }}
+        style={{
+          ...cardStyle,
+          cursor: "pointer",
+          backgroundColor: filtroGrupo === "mini atletismo" ? "#d9f2e3" : "white",
+          border: filtroGrupo === "mini atletismo" ? "2px solid #0a7a2f" : "2px solid transparent",
+          transform: filtroGrupo === "mini atletismo" ? "scale(1.03)" : "scale(1)",
+          transition: "all 0.2s ease",
+          boxShadow:
+            filtroGrupo === "mini atletismo"
+              ? "0 8px 20px rgba(10,122,47,0.15)"
+              : "0 4px 10px rgba(0,0,0,0.05)",
+        }}
+      >
+        <h3>Mini atletismo</h3>
+        <h2>{atletasMini}</h2>
+      </div>
+    </div>
 
-        <div style={{ marginTop: "35px" }}>
-            <h2 style={{ marginBottom: "16px", fontSize: "32px", fontWeight: "bold" }}>
-          Accesos rápidos
-        </h2>
+    <div style={{ marginTop: "35px" }}>
+      <h2 style={{ marginBottom: "16px", fontSize: "32px", fontWeight: "bold" }}>
+        Accesos rápidos
+      </h2>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: "20px",
-            }}
-          >
-            <button onClick={() => setSeccionEntrenador("atletas")} style={cardStyle}>
-              <h3>ATLETAS</h3>
-            </button>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: "20px",
+        }}
+      >
+        <button onClick={() => setSeccionEntrenador("atletas")} style={cardStyle}>
+          <h3>ATLETAS</h3>
+        </button>
 
-            <button onClick={() => setSeccionEntrenador("entrenamientos")} style={cardStyle}>
-              <h3>ENTRENAMIENTOS</h3>
-            </button>
+        <button onClick={() => setSeccionEntrenador("entrenamientos")} style={cardStyle}>
+          <h3>ENTRENAMIENTOS</h3>
+        </button>
 
-            <button onClick={() => setSeccionEntrenador("asistencia")} style={cardStyle}>
-              <h3>ASISTENCIAS</h3>
-            </button>
-
-            {admins.includes(usuarioAuth?.email || "") && (
+        {admins.includes(usuarioAuth?.email || "") && (
           <button onClick={() => setSeccionEntrenador("usuarios")} style={cardStyle}>
             <h3>USUARIOS</h3>
           </button>
         )}
-          </div>
-        </div>
+      </div>
+    </div>
+  </>
+)}
             {seccionEntrenador === "atletas" && (
               <>              
               {filtroGrupo !== "Todos" && (
@@ -2181,399 +1790,8 @@ const carrerasAtletaOrdenadas = useMemo(() => {
               </>
             )}
 
-            {seccionEntrenador === "asistencia" && (
-  <>
-    <h1 style={sectionTitleStyle}>Asistencia</h1>
-
-    <div style={cardStyle}>
-      <h2 style={{ marginTop: 0 }}>Asistencias por grupos</h2>
-      <div style={{ marginBottom: "12px" }}>
-        <select
-          value={grupoAsistencia}
-          onChange={(e) => setGrupoAsistencia(e.target.value)}
-        >
-          <option value="atletismo">Atletismo</option>
-          <option value="running">Running</option>
-          <option value="mini atletismo">Mini atletismo</option>
-        </select>
-      </div>
-
-      <h2 style={{ marginTop: 0 }}>Historial</h2>
-
-<div style={{ marginBottom: "20px" }}>
-  <h3 style={{ marginBottom: "10px", color: "#0a7a2f" }}>
-  </h3>
-
-  <select
-    value={fechaHistorialSeleccionada}
-    onChange={(e) => cargarAsistenciaDesdeHistorial(e.target.value)}
-    style={{
-      padding: "10px",
-      borderRadius: "10px",
-      border: "1px solid #ccc",
-      minWidth: "260px",
-      fontSize: "16px",
-    }}
-  >
-    <option value="">Fechas anteriores</option>
-
-    {registrosAsistencia
-      .slice()
-      .sort(
-        (a, b) =>
-          new Date(b.fecha + "T00:00:00").getTime() -
-          new Date(a.fecha + "T00:00:00").getTime()
-      )
-      .map((registro) => (
-        <option key={registro.id} value={registro.fecha}>
-          {new Date(registro.fecha + "T00:00:00").toLocaleDateString("es-AR")}
-        </option>
-      ))}
-  </select>
-</div>
-
-      <input
-        type="date"
-        value={fechaAsistencia}
-        onChange={(e) => cargarAsistenciaPorFecha(e.target.value)}
-        style={{ ...inputBase, maxWidth: "300px" }}
-      />
-
-      {registroEditandoId !== null && (
-  <button
-    onClick={() => {
-      setRegistroEditandoId(null);
-      setFechaHistorialSeleccionada("");
-      setFechaAsistencia("");
-      setAsistenciaDia({});
-    }}
-    style={{
-      marginTop: "12px",
-      padding: "10px 16px",
-      borderRadius: "10px",
-      border: "none",
-      backgroundColor: "#999",
-      color: "white",
-      cursor: "pointer",
-    }}
-  >
-    Cancelar edición
-  </button>
-)}
-
-      {fechaAsistencia && (
-        <p style={{ marginTop: 0, marginBottom: "15px" }}>
-          <strong>Fecha seleccionada:</strong> {formatearFecha(fechaAsistencia)}
-        </p>
-      )}
-
-      <div style={{ display: "grid", gap: "12px" }}>
-        {alumnosParaAsistencia.map((alumno) => {
-  const estado = asistenciaDia[alumno.nombre];
-
-  return (
-    <div
-      key={alumno.id}
-      style={{
-        display: "grid",
-        gridTemplateColumns: "1.2fr 150px 150px",
-        alignItems: "center",
-        gap: "12px",
-        borderRadius: "12px",
-        padding: "14px",
-        backgroundColor:
-          estado === "Sí"
-            ? "#d4edda"
-            : estado === "No"
-            ? "#f8d7da"
-            : "white",
-        border:
-          estado === "Sí"
-            ? "1px solid #28a745"
-            : estado === "No"
-            ? "1px solid #dc3545"
-            : "1px solid #e4e4e4",
-      }}
-    >
-            <strong>{alumno.nombre}</strong>
-
-            <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <input
-                type="radio"
-                name={`asistencia-${fechaAsistencia}-${alumno.id}`}
-                checked={asistenciaDia[alumno.nombre] === "Sí"}
-                onChange={() =>
-                  setAsistenciaDia({ ...asistenciaDia, [alumno.nombre]: "Sí" })
-                }
-              />
-              Sí asistió
-            </label>
-
-            <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <input
-                type="radio"
-                name={`asistencia-${fechaAsistencia}-${alumno.id}`}
-                checked={asistenciaDia[alumno.nombre] === "No"}
-                onChange={() =>
-                  setAsistenciaDia({ ...asistenciaDia, [alumno.nombre]: "No" })
-                }
-              />
-              No asistió
-            </label>
-              </div>
-  );
-})}
-      </div>
-
-      <button
-        onClick={guardarAsistencia}
-        style={{
-          marginTop: "18px",
-          padding: "14px 22px",
-          fontSize: "16px",
-          backgroundColor: "#0a7a2f",
-          color: "white",
-          border: "none",
-          borderRadius: "10px",
-          cursor: "pointer",
-          fontWeight: "bold",
-        }}
-      >
-        {registroEditandoId !== null
-  ? "Actualizar asistencia"
-  : "Guardar asistencia"}
-      </button>
-    </div>
-
-    <div style={{ ...cardStyle, marginTop: "20px" }}>
-      <h2 style={{ marginTop: 0 }}>Estadísticas generales de asistencia</h2>
-
-      {estadisticasAsistencia.length === 0 ? (
-        <p>No hay estadísticas disponibles todavía.</p>
-      ) : (
-        <div style={{ display: "grid", gap: "12px" }}>
-          {estadisticasAsistencia.map((item) => (
-            <div
-              key={item.nombre}
-              style={{
-                border: "1px solid #d9d9d9",
-                borderRadius: "14px",
-                padding: "16px",
-              }}
-            >
-              <div
-                style={{
-                  fontWeight: "bold",
-                  fontSize: "18px",
-                  marginBottom: "8px",
-                }}
-              >
-                {item.nombre}
-              </div>
-
-              <div style={{ marginBottom: "6px" }}>
-                Porcentaje de asistencia:{" "}
-                <span
-                  style={{
-                    fontWeight: "bold",
-                    color: item.porcentaje >= 80 ? "#4caf50" : "#ff5252",
-                  }}
-                >
-                  {item.porcentaje}%
-                </span>
-              </div>
-
-              <div style={{ marginBottom: "6px" }}>
-                Presentes: {item.presentes}
-              </div>
-
-              <div>
-                Ausentes: {item.ausentes}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  </>
-)}
-
-            {seccionEntrenador === "carreras" && (
-              <>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: "20px",
-                    gap: "20px",
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <h1 style={{ ...sectionTitleStyle, marginBottom: 0 }}>Carreras</h1>
-
-                  <button
-                    onClick={() => setMostrarFormularioCarrera(!mostrarFormularioCarrera)}
-                    style={{
-                      padding: "14px 22px",
-                      backgroundColor: "#0a7a2f",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "10px",
-                      cursor: "pointer",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    Agregar carrera
-                  </button>
-                </div>
-
-                {mostrarFormularioCarrera && (
-                  <div style={{ ...cardStyle, marginBottom: "20px" }}>
-                    <h2 style={{ marginTop: 0 }}>Nueva carrera</h2>
-
-                    <input
-                      type="text"
-                      placeholder="Nombre de la carrera"
-                      value={nuevaCarrera.nombre}
-                      onChange={(e) =>
-                        setNuevaCarrera({ ...nuevaCarrera, nombre: e.target.value })
-                      }
-                      style={inputBase}
-                    />
-
-                    <input
-                      type="date"
-                      value={nuevaCarrera.fecha}
-                      onChange={(e) =>
-                        setNuevaCarrera({ ...nuevaCarrera, fecha: e.target.value })
-                      }
-                      style={inputBase}
-                    />
-
-                    <button
-                      onClick={agregarCarrera}
-                      style={{
-                        padding: "14px 22px",
-                        backgroundColor: "#0a7a2f",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "10px",
-                        cursor: "pointer",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      Guardar carrera
-                    </button>
-                  </div>
-                )}
-
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1.1fr",
-                    gap: "20px",
-                    alignItems: "start",
-                  }}
-                >
-                  <div style={cardStyle}>
-                    <h2 style={{ marginTop: 0 }}>Calendario de carreras</h2>
-
-                    <div style={{ display: "grid", gap: "12px" }}>
-                      {carreras.map((carrera) => (
-                        <div
-                          key={carrera.id}
-                          onClick={() => setCarreraSeleccionadaId(carrera.id)}
-                          style={{
-                            border:
-                              carreraSeleccionadaId === carrera.id
-                                ? "2px solid #0a7a2f"
-                                : "1px solid #d9d9d9",
-                            borderRadius: "14px",
-                            padding: "16px",
-                            cursor: "pointer",
-                            backgroundColor:
-                              carreraSeleccionadaId === carrera.id ? "#eef9f0" : "white",
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              gap: "10px",
-                            }}
-                          >
-                            <div>
-                              <strong style={{ fontSize: "18px" }}>{carrera.nombre}</strong>
-                              <p style={{ margin: "8px 0 0 0" }}>{formatearFecha(carrera.fecha)}</p>
-                            </div>
-
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                eliminarCarrera(carrera.id);
-                              }}
-                              style={deleteButtonStyle}
-                            >
-                              Eliminar
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div style={cardStyle}>
-                    <h2 style={{ marginTop: 0 }}>
-                      {carreraSeleccionada
-                        ? `Inscribir atletas en ${carreraSeleccionada.nombre}`
-                        : "Seleccioná una carrera"}
-                    </h2>
-
-                    {carreraSeleccionada ? (
-                      <div style={{ display: "grid", gap: "12px" }}>
-                        {alumnos.map((alumno) => {
-                          const estaAnotado = carreraSeleccionada.inscritos.includes(alumno.nombre);
-
-                          return (
-                            <div
-                              key={alumno.id}
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                border: "1px solid #e4e4e4",
-                                borderRadius: "12px",
-                                padding: "14px",
-                              }}
-                            >
-                              <span>{alumno.nombre}</span>
-
-                              <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <input
-                                  type="checkbox"
-                                  checked={estaAnotado}
-                                  onChange={() =>
-                                    toggleInscripcionAtleta(carreraSeleccionada.id, alumno.nombre)
-                                  }
-                                />
-                                Anotar
-                              </label>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <p>Elegí una carrera del calendario para ver los atletas.</p>
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
-
             {seccionEntrenador === "usuarios" && admins.includes(usuarioAuth?.email || "") && (
-<>
+              <>
     <h1 style={sectionTitleStyle}>Usuarios</h1>
 
     <div style={cardStyle}>
@@ -2759,87 +1977,6 @@ const carrerasAtletaOrdenadas = useMemo(() => {
                 gap: "20px",
               }}
             >
-              <div style={cardStyle}>
-                <h3>Asistencia semanal</h3>
-                <p style={{ fontSize: "32px", fontWeight: "bold" }}>
-                  {porcentajeAsistenciaAtletaActual}%
-                </p>
-                <p style={{ marginTop: "10px" }}>
-                  {asistenciasPositivasAtletaActual} de {asistenciasAtletaActual.length} días asistidos
-                </p>
-              </div>
-
-              <div style={cardStyle}>
-                <h3 style={{ fontSize: "20px", fontWeight: "bold" }}>
-                  Competencias anotadas
-                </h3>
-
-                {carrerasAtleta.length === 0 ? (
-                  <p>No estás anotado en ninguna competencia.</p>
-                ) : (
-                  <ul style={{ marginTop: "10px", paddingLeft: "18px" }}>
-                    {carrerasAtletaOrdenadas.map((carrera) => (
-                      <li key={carrera.id}>
-                        <strong>{carrera.nombre}</strong> - {formatearFecha(carrera.fecha)}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              <div style={cardStyle}>
-                <h3>Mis marcas personales</h3>
-
-                <textarea
-                  value={marcaPersonalAtleta}
-                  onChange={(e) => setMarcaPersonalAtleta(e.target.value)}
-                  placeholder={`Ejemplo:
-                      1500m - 4:05
-                      3000m - 8:45
-                      5000m - 15:10
-                      10K - 31:40
-                      21K - 1:07:17`}
-                  style={{
-                    width: "100%",
-                    minHeight: "140px",
-                    padding: "10px",
-                    borderRadius: "8px",
-                    border: "1px solid #ccc",
-                    resize: "vertical",
-                  }}
-                />
-
-                <button
-                  onClick={guardarMarcasAtleta}
-                  disabled={guardandoMarca}
-                  style={{
-                    marginTop: "10px",
-                    padding: "8px 16px",
-                    borderRadius: "8px",
-                    border: "none",
-                    backgroundColor: "#0a7a2f",
-                    color: "white",
-                    cursor: "pointer",
-                  }}
-                >
-                  {guardandoMarca ? "Guardando..." : "Guardar marcas"}
-                </button>
-              </div>
-            </div>
-
-            {mensajeMarca && (
-              <p
-                style={{
-                  color: "#0a7a2f",
-                  marginTop: "10px",
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  textAlign: "center",
-                }}
-              >
-                ✅ {mensajeMarca}
-              </p>
-            )}
 
             <div style={{ ...cardStyle, marginTop: "25px" }}>
               <h2>Mi semana de entrenamiento</h2>
@@ -2973,7 +2110,7 @@ const carrerasAtletaOrdenadas = useMemo(() => {
               </div>
             </div>
           )}
-
+          </div>
             <button
               onClick={async () => {
                 await supabase.auth.signOut();
@@ -3001,5 +2138,6 @@ const carrerasAtletaOrdenadas = useMemo(() => {
         </div>
       )}
     </main>
-  );
+  </>
+);
 }
